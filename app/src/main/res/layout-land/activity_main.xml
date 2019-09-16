@@ -71,7 +71,7 @@
                             android:layout_height="wrap_content"
                             style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
                             android:id="@+id/fullnameTextInputLayout"
-                            android:hint="Name"
+                            android:hint="Age"
                             android:layout_weight="5"
                             android:layout_marginEnd="4dp">
 
@@ -80,24 +80,7 @@
                                 android:layout_height="wrap_content"
                                 android:inputType="textPersonName"
                                 android:maxLines="1"
-                                android:id="@+id/fullnameTextView" android:focusable="true"
-                                android:longClickable="false"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-                    <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-                            android:id="@+id/telTextInputLayout"
-                            android:hint="Phone Number"
-                            android:layout_weight="5" android:layout_marginStart="4dp">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="phone"
-                                android:maxLines="1"
-                                android:id="@+id/telTextView"
-                                android:focusable="true"
+                                android:id="@+id/ageTextView" android:focusable="true"
                                 android:longClickable="false"/>
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
@@ -116,7 +99,7 @@
                             android:layout_height="wrap_content"
                             style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
                             android:id="@+id/cidTextInputLayout"
-                            android:hint="CID"
+                            android:hint="Similarity"
                             android:layout_weight="5" android:layout_marginEnd="4dp">
 
                         <com.google.android.material.textfield.TextInputEditText
@@ -124,25 +107,7 @@
                                 android:layout_height="wrap_content"
                                 android:inputType="numberDecimal"
                                 android:maxLines="1"
-                                android:id="@+id/cidTextView"
-                                android:focusable="true"
-                                android:longClickable="false"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-                            android:id="@+id/emailTextInputLayout"
-                            android:hint="Email"
-                            android:layout_weight="5" android:layout_marginStart="4dp">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="textEmailAddress"
-                                android:maxLines="1"
-                                android:id="@+id/emailTextView"
+                                android:id="@+id/similarityTextView"
                                 android:focusable="true"
                                 android:longClickable="false"/>
                     </com.google.android.material.textfield.TextInputLayout>
@@ -150,108 +115,37 @@
 
                 </LinearLayout>
 
-                <LinearLayout
-                        android:orientation="horizontal"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content" app:layout_constraintStart_toEndOf="@+id/faceImageView"
-                        app:layout_constraintEnd_toEndOf="parent" android:layout_marginEnd="16dp"
-                        app:layout_constraintTop_toBottomOf="@+id/linearLayout3" android:id="@+id/linearLayout4"
-                        android:layout_marginStart="16dp"
-                        android:weightSum="10" android:layout_marginTop="8dp">
-
-                    <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-                            android:id="@+id/codeTextInputLayout"
-                            android:hint="Code"
-                            app:endIconMode="custom"
-                            app:endIconDrawable="@drawable/qrcode_scan"
-                            app:endIconContentDescription="@string/content_description"
-                            android:layout_weight="5" android:layout_marginEnd="4dp">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="numberDecimal"
-                                android:maxLines="1"
-                                android:id="@+id/codeTextView" android:focusable="false"
-                                android:longClickable="false" android:editable="false"
-                                android:focusableInTouchMode="false" android:cursorVisible="false"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-                            android:id="@+id/companyTextInputLayout"
-                            android:hint="Company"
-                            android:layout_weight="5" android:layout_marginStart="4dp">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="textPersonName"
-                                android:maxLines="1"
-                                android:id="@+id/companyTextView"
-                                android:focusable="true"
-                                android:longClickable="false"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                </LinearLayout>
-
 
                 <LinearLayout
-                        android:orientation="horizontal"
+                        android:id="@+id/linearLayout"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        android:weightSum="10"
-                        app:layout_constraintTop_toBottomOf="@+id/linearLayout4"
-                        android:layout_marginEnd="16dp" app:layout_constraintStart_toStartOf="@+id/linearLayout4"
-                        android:layout_marginBottom="8dp"
-                        app:layout_constraintBottom_toTopOf="@+id/linearLayout" android:layout_marginTop="8dp">
-                    <TextView
-                            android:layout_gravity="center_vertical"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" android:id="@+id/regTypeTextView"
-                            android:layout_weight="5" android:textSize="36sp" android:layout_marginEnd="4dp"
-                            android:textAlignment="center" android:textStyle="bold" android:text="Reg Type"/>
-                    <TextView
-                            android:layout_gravity="center_vertical"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" android:id="@+id/zoneTextView"
-                            android:layout_weight="5" android:textSize="36sp" android:layout_marginStart="4dp"
-                            android:textAlignment="center" android:textStyle="bold" android:text="@string/zone_string"/>
-                </LinearLayout>
-                <LinearLayout
-                        android:orientation="horizontal"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        app:layout_constraintEnd_toEndOf="parent"
                         android:layout_marginEnd="16dp"
-                        android:weightSum="10" android:id="@+id/linearLayout"
-                        android:layout_marginBottom="8dp" app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="@+id/linearLayout4">
+                        android:layout_marginBottom="8dp"
+                        android:orientation="horizontal"
+                        android:weightSum="10"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="@+id/linearLayout3">
 
                     <com.google.android.material.button.MaterialButton
-                            android:layout_weight="5"
                             android:id="@+id/resetButton"
                             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginRight="4dp"
+                            android:layout_weight="5"
                             android:text="reset"
-                            app:strokeColor="@color/colorPrimary"/>
+                            app:strokeColor="@color/colorPrimary" />
 
                     <com.google.android.material.button.MaterialButton
-                            android:layout_weight="5"
                             android:id="@+id/registerButton"
                             style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginLeft="4dp"
-                            android:text="register"/>
+                            android:layout_weight="5"
+                            android:text="register" />
                 </LinearLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
