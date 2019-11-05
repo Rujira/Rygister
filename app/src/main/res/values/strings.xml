@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Self Registration</string>
+    <string name="app_name">Face Comparison</string>
     <string name="cid_string">CID</string>
     <string name="name_string">Name</string>
     <string name="zone_string">Zone</string>

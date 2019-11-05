@@ -37,6 +37,7 @@ class CameraFragment : Fragment() {
 
     // private val MAX_PREVIEW_WIDTH = 1280
     // private val MAX_PREVIEW_HEIGHT = 720
+
     private lateinit var captureSession: CameraCaptureSession
     private lateinit var captureRequestBuilder: CaptureRequest.Builder
 
@@ -76,7 +77,7 @@ class CameraFragment : Fragment() {
         activity?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
 
         var width = displayMetrics.widthPixels
-        var height = displayMetrics.heightPixels -
+        var height = displayMetrics.heightPixels
 
                 Log.d(TAG, width.toString())
         Log.d(TAG, height.toString())
@@ -226,9 +227,9 @@ class CameraFragment : Fragment() {
     }
 
 
-
     private fun convertBitmapToBase64String(bitmap: Bitmap): String {
-        var base64String: String
+
+        val base64String: String
         val stream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
         val byteArray = stream.toByteArray()
@@ -241,7 +242,6 @@ class CameraFragment : Fragment() {
 
         return base64String
     }
-
 
 
 }

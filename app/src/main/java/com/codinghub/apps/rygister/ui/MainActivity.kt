@@ -81,32 +81,24 @@ class MainActivity : AppCompatActivity() {
             task.execute()
         }
 
-        ageTextView.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
+//        ageTextView.addTextChangedListener(object : TextWatcher {
+//            override fun afterTextChanged(s: Editable?) {
+//
+//                updateUI()
+//            }
+//            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
+//            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
+//        })
+//
+//        similarityTextView.addTextChangedListener(object : TextWatcher {
+//            override fun afterTextChanged(s: Editable?) {
+//
+//                updateUI()
+//            }
+//            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
+//            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
+//        })
 
-                updateUI()
-            }
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
-        })
-
-        similarityTextView.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-
-                updateUI()
-            }
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
-        })
-
-
-        resetButton.setOnClickListener {
-            reset()
-        }
-
-        registerButton.setOnClickListener {
-            showCamera()
-        }
 
 
     }
@@ -188,9 +180,8 @@ class MainActivity : AppCompatActivity() {
                     val info = thaiSmartCard.personalInformation
 
                     if (info != null) {
-                        similarityTextView.setText(info.PersonalID)
-                        ageTextView.setText(info.NameTH)
-                        faceImageView.setImageBitmap(thaiSmartCard.personalPicture)
+
+                     //   faceImageView.setImageBitmap(thaiSmartCard.personalPicture)
 
                         updateUI()
 
@@ -278,27 +269,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateUI() {
-        if(ageTextView.text!!.isNotEmpty() && similarityTextView.text!!.isNotEmpty()) {
-            enableRegisterButton()
-        } else {
-            enableRegisterButton()
-        }
+
     }
 
-    private fun disableRegisterButton() {
-        registerButton.isEnabled = false
-    }
-
-    private fun enableRegisterButton() {
-        registerButton.isEnabled = true
-    }
+//    private fun disableRegisterButton() {
+//        registerButton.isEnabled = false
+//    }
+//
+//    private fun enableRegisterButton() {
+//        registerButton.isEnabled = true
+//    }
 
     private fun reset() {
-
-        faceImageView.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_face_image))
-        ageTextView.setText("")
-        similarityTextView.setText("")
-
 
         updateUI()
     }

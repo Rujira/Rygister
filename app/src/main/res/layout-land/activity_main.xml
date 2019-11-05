@@ -49,104 +49,28 @@
                     android:layout_height="match_parent"
                     android:focusableInTouchMode="true" android:id="@+id/mainContainer">
 
+
+                <TextView
+                        android:id="@+id/textView2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="32dp"
+                        android:text="Please Insert ID Card"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        app:layout_constraintBottom_toTopOf="@+id/imageView"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent" />
+
                 <ImageView
-                        android:layout_width="200dp"
-                        android:layout_height="200dp" app:srcCompat="@drawable/ic_face_image"
-                        android:id="@+id/faceImageView" android:layout_marginTop="16dp"
-                        app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"
-                        android:layout_marginStart="16dp"
-                />
-
-                <LinearLayout
-                        android:orientation="horizontal"
-                        android:layout_width="0dp"
+                        android:id="@+id/imageView"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        app:layout_constraintStart_toEndOf="@+id/faceImageView" android:layout_marginStart="16dp"
-                        app:layout_constraintEnd_toEndOf="parent" android:layout_marginEnd="16dp"
-                        app:layout_constraintTop_toTopOf="parent" android:layout_marginTop="16dp"
-                        android:weightSum="10" android:id="@+id/linearLayout2">
-
-                    <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-                            android:id="@+id/fullnameTextInputLayout"
-                            android:hint="Age"
-                            android:layout_weight="5"
-                            android:layout_marginEnd="4dp">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="textPersonName"
-                                android:maxLines="1"
-                                android:id="@+id/ageTextView" android:focusable="true"
-                                android:longClickable="false"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-                </LinearLayout>
-
-                <LinearLayout
-                        android:orientation="horizontal"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        app:layout_constraintEnd_toEndOf="parent" android:layout_marginEnd="16dp"
-                        app:layout_constraintStart_toStartOf="@+id/linearLayout2"
-                        app:layout_constraintTop_toBottomOf="@+id/linearLayout2" android:id="@+id/linearLayout3"
-                        android:weightSum="10" android:layout_marginTop="8dp">
-
-                    <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-                            android:id="@+id/cidTextInputLayout"
-                            android:hint="Similarity"
-                            android:layout_weight="5" android:layout_marginEnd="4dp">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="numberDecimal"
-                                android:maxLines="1"
-                                android:id="@+id/similarityTextView"
-                                android:focusable="true"
-                                android:longClickable="false"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-
-                </LinearLayout>
-
-
-                <LinearLayout
-                        android:id="@+id/linearLayout"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="16dp"
-                        android:layout_marginBottom="8dp"
-                        android:orientation="horizontal"
-                        android:weightSum="10"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="@+id/linearLayout3">
-
-                    <com.google.android.material.button.MaterialButton
-                            android:id="@+id/resetButton"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginRight="4dp"
-                            android:layout_weight="5"
-                            android:text="reset"
-                            app:strokeColor="@color/colorPrimary" />
-
-                    <com.google.android.material.button.MaterialButton
-                            android:id="@+id/registerButton"
-                            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginLeft="4dp"
-                            android:layout_weight="5"
-                            android:text="register" />
-                </LinearLayout>
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:srcCompat="@drawable/ic_insert_card" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
