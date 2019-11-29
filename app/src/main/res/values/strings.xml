@@ -7,5 +7,15 @@
     <string name="image_description">Image Description</string>
     <string name="content_description">Content Description</string>
     <string name="camera_request_rationale">Camera app requires camera access</string>
+    <string name="identify_face">Identify Face</string>
+    <string name="permission_camera_rationale">Access to the camera is needed for detection</string>
+    <string name="no_camera_permission">This application cannot run because it does not have the camera permission.  The application will now exit.</string>
+    <string name="low_storage_error">Face detector dependencies cannot be downloaded due to low device storage</string>
+    <string name="ok">OK</string>
+    <string name="menu_face_recognition">Face Recognition</string>
+    <string name="menu_settings">Settings</string>
+    <string name="face_not_found">Face not found</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_add_face">Add New Face</string>
 
 </resources>

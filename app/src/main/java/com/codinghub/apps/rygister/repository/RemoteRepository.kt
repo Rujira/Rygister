@@ -11,12 +11,12 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.codinghub.apps.rygister.app.Injection
+import com.codinghub.apps.rygister.model.compareface.CompareFaceRequest
+import com.codinghub.apps.rygister.model.compareface.CompareFaceResponse
+import com.codinghub.apps.rygister.model.compareface.TrainFaceRequest
+import com.codinghub.apps.rygister.model.compareface.TrainFaceResponse
 import com.codinghub.apps.rygister.model.error.ApiError
 import com.codinghub.apps.rygister.model.error.Either
-import com.codinghub.apps.rygister.model.qrcode.QRCodeRequest
-import com.codinghub.apps.rygister.model.qrcode.QRCodeResponse
-import com.codinghub.apps.rygister.model.register.RegisterRequest
-import com.codinghub.apps.rygister.model.register.RegisterResponse
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -25,42 +25,39 @@ object RemoteRepository : Repository {
 
     private val api = Injection.provideRygisterApi()
 
+    override fun compareFaces(request: CompareFaceRequest): LiveData<Either<CompareFaceResponse>> {
+        val liveData = MutableLiveData<Either<CompareFaceResponse>>()
+        api.compareFace(request).enqueue(object : Callback<CompareFaceResponse>{
 
-    override fun checkQRCode(request: QRCodeRequest): LiveData<Either<QRCodeResponse>> {
-
-        val liveData = MutableLiveData<Either<QRCodeResponse>>()
-        api.checkQRCode(request).enqueue(object : Callback<QRCodeResponse> {
-
-            override fun onResponse(call: Call<QRCodeResponse>, response: Response<QRCodeResponse>) {
-                if(response.isSuccessful) {
+            override fun onResponse(call: Call<CompareFaceResponse>, response: Response<CompareFaceResponse>) {
+                if(response != null && response.isSuccessful) {
                     liveData.value = Either.success(response.body())
                 } else {
-                    liveData.value = Either.error(ApiError.QRCODE, null)
+                    liveData.value = Either.error(ApiError.COMPARE, null)
                 }
             }
 
-            override fun onFailure(call: Call<QRCodeResponse>, t: Throwable) {
-                liveData.value = Either.error(ApiError.QRCODE, null)
+            override fun onFailure(call: Call<CompareFaceResponse>, t: Throwable) {
+                liveData.value = Either.error(ApiError.COMPARE, null)
             }
         })
         return liveData
     }
 
-    override fun register(request: RegisterRequest): LiveData<Either<RegisterResponse>> {
+    override fun trainFace(request: TrainFaceRequest): LiveData<Either<TrainFaceResponse>> {
+        val liveData = MutableLiveData<Either<TrainFaceResponse>>()
+        api.trainFace(request).enqueue(object : Callback<TrainFaceResponse>{
 
-        val liveData = MutableLiveData<Either<RegisterResponse>>()
-        api.register(request).enqueue(object : Callback<RegisterResponse> {
-
-            override fun onResponse(call: Call<RegisterResponse>, response: Response<RegisterResponse>) {
-                if(response.isSuccessful) {
+            override fun onResponse(call: Call<TrainFaceResponse>, response: Response<TrainFaceResponse>) {
+                if(response != null && response.isSuccessful) {
                     liveData.value = Either.success(response.body())
                 } else {
-                    liveData.value = Either.error(ApiError.REGISTER, null)
+                    liveData.value = Either.error(ApiError.TRAIN, null)
                 }
             }
 
-            override fun onFailure(call: Call<RegisterResponse>, t: Throwable) {
-                liveData.value = Either.error(ApiError.REGISTER, null)
+            override fun onFailure(call: Call<TrainFaceResponse>, t: Throwable) {
+                liveData.value = Either.error(ApiError.TRAIN, null)
             }
         })
         return liveData

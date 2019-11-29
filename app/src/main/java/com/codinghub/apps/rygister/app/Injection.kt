@@ -1,7 +1,7 @@
 package com.codinghub.apps.rygister.app
 
 import com.codinghub.apps.rygister.BuildConfig
-import com.codinghub.apps.rygister.model.AppPrefs
+import com.codinghub.apps.rygister.model.preferences.AppPrefs
 import com.codinghub.apps.rygister.repository.RemoteRepository
 import com.codinghub.apps.rygister.repository.Repository
 import com.codinghub.apps.rygister.repository.RygisterApi
