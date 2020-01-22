@@ -415,6 +415,8 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
             .apply {
                 show()
             }
+
+        
     }
 
     private fun dismissLoadingDialog() {
