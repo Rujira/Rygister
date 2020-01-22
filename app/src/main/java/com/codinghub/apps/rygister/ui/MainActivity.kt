@@ -366,8 +366,10 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
                     else -> rotateImage(bitmap, 0f)
                 }
 
+                val resizedBitmap = resizeBitmap(snapImage, snapImage.width / 2, snapImage.height / 2)
+
                 val stream = ByteArrayOutputStream()
-                snapImage.compress(Bitmap.CompressFormat.JPEG, 90, stream)
+                resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
                 val byteArray = stream.toByteArray()
 
                 //  var base64String: String
@@ -390,13 +392,17 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
         val mat : Matrix? = Matrix()
         mat?.postRotate(angle)
 
-        //resize
-        val constWidth = 1200
-        val ratio: Float = bitmap.width.toFloat() / bitmap.height.toFloat()
-        val height: Int = (constWidth / ratio).roundToInt()
+        return Bitmap.createBitmap(bitmap , 0, 0, bitmap.width, bitmap.height, mat, true)
+    }
 
-        // return Bitmap.createBitmap(bitmap , 0, 0, bitmap.width, bitmap.height, mat, true)
-        return  Bitmap.createBitmap(bitmap , 0, 0, constWidth, height, mat, true)
+    private fun resizeBitmap(bitmap: Bitmap, width:Int, height:Int): Bitmap {
+
+        return Bitmap.createScaledBitmap(
+            bitmap,
+            width,
+            height,
+            false
+        )
     }
 
     private fun showLoadingDialogWith(message: String){
