@@ -63,6 +63,7 @@ object RemoteRepository : Repository {
         return liveData
     }
 
+
     @SuppressLint("Recycle")
     override fun modifyImageOrientation(activity: Activity, bitmap: Bitmap, uri: Uri): Bitmap {
 

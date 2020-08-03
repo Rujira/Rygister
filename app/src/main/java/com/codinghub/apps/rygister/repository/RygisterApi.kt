@@ -20,4 +20,6 @@ interface RygisterApi {
     @Headers("Accept: application/json")
     @POST("faceapi/compare")
     fun compareFace(@Body body: CompareFaceRequest): Call<CompareFaceResponse>
+
+
 }

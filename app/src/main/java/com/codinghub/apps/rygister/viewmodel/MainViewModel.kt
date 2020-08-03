@@ -27,4 +27,5 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return repository.compareFaces(request)
     }
 
+
 }
