@@ -13,6 +13,8 @@ import androidx.lifecycle.MutableLiveData
 import com.codinghub.apps.rygister.app.Injection
 import com.codinghub.apps.rygister.model.error.ApiError
 import com.codinghub.apps.rygister.model.error.Either
+import com.codinghub.apps.rygister.model.login.LoginRequest
+import com.codinghub.apps.rygister.model.login.LoginResponse
 import com.codinghub.apps.rygister.model.qrcode.QRCodeRequest
 import com.codinghub.apps.rygister.model.qrcode.QRCodeResponse
 import com.codinghub.apps.rygister.model.register.RegisterRequest
@@ -25,6 +27,25 @@ object RemoteRepository : Repository {
 
     private val api = Injection.provideRygisterApi()
 
+    override fun rygisterLogin(request: LoginRequest): LiveData<Either<LoginResponse>> {
+
+        val loginAPI = Injection.provideLoginAPI()
+        val liveData = MutableLiveData<Either<LoginResponse>>()
+        loginAPI.rygisterLogin(request).enqueue(object : Callback<LoginResponse> {
+
+            override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
+                if (response.isSuccessful) {
+                    liveData.value = Either.success(response.body())
+                } else {
+                    liveData.value = Either.error(ApiError.LOGIN, null)
+                }
+            }
+            override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                liveData.value = Either.error(ApiError.LOGIN, null)
+            }
+        })
+        return liveData
+    }
 
     override fun checkQRCode(request: QRCodeRequest): LiveData<Either<QRCodeResponse>> {
 

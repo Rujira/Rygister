@@ -3,10 +3,12 @@ package com.codinghub.apps.rygister.ui
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.*
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.hardware.usb.UsbManager
 import android.net.Uri
@@ -19,41 +21,35 @@ import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
-import android.view.View
-import android.widget.Button
-import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import com.codinghub.apps.rygister.R
+import com.codinghub.apps.rygister.model.AppPrefs
 import com.codinghub.apps.rygister.model.UIMode
 import com.codinghub.apps.rygister.model.error.ApiError
+import com.codinghub.apps.rygister.model.error.Either
 import com.codinghub.apps.rygister.model.error.Status
+import com.codinghub.apps.rygister.model.login.LoginResponse
+import com.codinghub.apps.rygister.model.register.RegisterResponse
 import com.codinghub.apps.rygister.thcard.SmartCardDevice
 import com.codinghub.apps.rygister.thcard.ThaiSmartCard
 import com.codinghub.apps.rygister.viewmodel.MainViewModel
-import com.google.zxing.Result
 import dmax.dialog.SpotsDialog
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.choose_image_sheet.view.*
-import me.dm7.barcodescanner.zxing.ZXingScannerView
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.util.*
 
-class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var mainViewModel: MainViewModel
-
-    private lateinit var mScannerView: ZXingScannerView
-
-    private lateinit var qrCodeDialog: AlertDialog
-    
-    private lateinit var mapDialog: AlertDialog
+    internal val TAG = MainActivity::class.java.simpleName
 
     var task = MyTask()
     private val CARD_READ = 1
@@ -66,7 +62,10 @@ class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
 
     private var usbDeviceIsAttached = false
 
-    internal val TAG = MainActivity::class.java.simpleName
+    private var mManual: String = ""
+    private var fullName: String = ""
+    private var visiteeName: String = ""
+    private var cardNumber: String = ""
 
     var cardTapCount: Int = 0
 
@@ -81,39 +80,22 @@ class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
     private val IMAGE_CAPTURE_CODE = 1001
     private val IMAGE_GALLERY_CODE = 1002
 
-    private var mAddress: String = ""
-    private var mCountry: String = ""
-    private var mDob: String = ""
-    private var mEmail: String = ""
-    private var mFacebook_id: String = ""
-    private var mGender: String = ""
-    private var mLine_id: String = ""
-    private var mManual: String = ""
-    private var mName: String = ""
-    private var mNation: String = ""
-    private var mPersonID: String = ""
-    private var mPicture: String = ""
-    private var mProvince: String = ""
-    private var mQRCode: String = ""
-    private var mRegType: String = ""
-    private var mTel: String = ""
-    private var mCompany: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        mainViewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
+        mainViewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
         supportActionBar!!.elevation = 0.0f
 
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder().permitAll().build())
-
         reset()
         configureUI()
         updateConnection()
         updateUI()
+        performLoginRequest()
         checkCardReaderAttached()
         if (task.status != AsyncTask.Status.RUNNING) {
             task.execute()
@@ -125,67 +107,32 @@ class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
 
         fullnameTextView.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                mName = fullnameTextView.text.toString()
+                fullName = fullnameTextView.text.toString()
                 updateUI()
             }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
         })
 
-        cidTextView.addTextChangedListener(object : TextWatcher {
+        visiteeTextView.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                mPersonID = cidTextView.text.toString()
+                visiteeName = visiteeTextView.text.toString()
                 updateUI()
             }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
         })
 
+//        cardNumberTextView.addTextChangedListener(object : TextWatcher {
+//            override fun afterTextChanged(s: Editable?) {
+//                cardNumber = cardNumberTextView.text.toString()
+//                updateUI()
+//            }
+//            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
+//            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
+//        })
 
-        codeTextView.addTextChangedListener(object  : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                mQRCode = codeTextView.text.toString()
-                updateUI()
-            }
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
-        })
-
-        telTextView.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                mTel = telTextView.text.toString()
-                updateUI()
-
-            }
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
-        })
-
-        emailTextView.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                mEmail = emailTextView.text.toString()
-                updateUI()
-            }
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
-        })
-
-        companyTextView.addTextChangedListener(object : TextWatcher{
-            override fun afterTextChanged(s: Editable?) {
-                mCompany = companyTextView.text.toString()
-                updateUI()
-            }
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-            }
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-            }
-        })
-
-        codeTextInputLayout.setEndIconOnClickListener {
-            Log.d(TAG, "Clicked")
-            showQRCodeDialog()
-        }
+        setupDropdown()
 
         resetButton.setOnClickListener {
             reset()
@@ -214,7 +161,103 @@ class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
         registerButton.setOnClickListener {
             register()
         }
+    }
 
+    private fun setupDropdown() {
+        val items = listOf("985859", "979502", "981348", "980676", "960263", "961169", "960867", "960565", "967939", "968227", "967651", "969088", "968802", "963294", "963896", "964193", "964480", "948605", "949478", "949770")
+        val adapter = ArrayAdapter<String>(applicationContext, R.layout.dropdown_menu_pop_item, items)
+        cardNumberDropdown.setAdapter(adapter)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        menuInflater.inflate(R.menu.main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        return when (item.itemId) {
+            R.id.action_connect -> {
+                performLoginRequest()
+                true
+            }
+
+            R.id.action_settings -> {
+                showSettings()
+                true
+            }
+
+
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun showSettings() {
+
+        val dialogBuilder = AlertDialog.Builder(this)
+        val dialogView = this.layoutInflater.inflate(R.layout.dialog_settings, null)
+        dialogBuilder.setView(dialogView)
+        dialogBuilder.setCancelable(true)
+
+        dialogBuilder.setTitle("Settings")
+
+        val serviceURLTextView = dialogView.findViewById<EditText>(R.id.serviceURLEditText)
+        val usernameTextView = dialogView.findViewById<EditText>(R.id.usernameEditText)
+        val passwordTextView = dialogView.findViewById<EditText>(R.id.passwordEditText)
+        val deptTextView = dialogView.findViewById<EditText>(R.id.departmentEditText)
+
+        serviceURLTextView.text = Editable.Factory.getInstance().newEditable(mainViewModel.getServiceURL())
+        usernameTextView.text = Editable.Factory.getInstance().newEditable(mainViewModel.getUsername())
+        passwordTextView.text = Editable.Factory.getInstance().newEditable(mainViewModel.getPassword())
+        deptTextView.text = Editable.Factory.getInstance().newEditable(mainViewModel.getDept())
+
+        dialogBuilder.setPositiveButton("Save Change") {_, _->
+
+            mainViewModel.saveServiceURL(serviceURLTextView.text.toString())
+            mainViewModel.saveUsername(usernameTextView.text.toString())
+            mainViewModel.savePassword(passwordTextView.text.toString())
+            mainViewModel.saveDept(deptTextView.text.toString())
+
+        }
+
+        dialogBuilder.setNegativeButton("Close") { _, _->
+            //pass
+        }
+
+        val dialog = dialogBuilder.create()
+        dialog.show()
+
+        val dismissButton = dialog.getButton(DialogInterface.BUTTON_NEGATIVE)
+        dismissButton.setBackgroundColor(Color.TRANSPARENT)
+        dismissButton.setTextColor(ContextCompat.getColor(this.applicationContext, R.color.colorLightGray))
+
+    }
+
+
+    private fun performLoginRequest() {
+
+        val username = mainViewModel.getUsername()
+        val password = mainViewModel.getPassword()
+
+        mainViewModel.performLoginRequest(username!!, password!!).observe(this, Observer<Either<LoginResponse>> { either ->
+            if (either?.status == Status.SUCCESS && either.data != null) {
+                if (either.data.rtn == 0) {
+                    Log.d(TAG, "${either.data.result}")
+                    mainViewModel.saveToken(either.data.result.web_authorization)
+                    mainViewModel.saveBackendToken(either.data.result.backend_authorization)
+                    Toast.makeText(this, "Successful Login", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Failed to Login ${either.data.message}", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                if (either?.error == ApiError.LOGIN) {
+                    Toast.makeText(this, "Could not connect to server!", Toast.LENGTH_SHORT).show()
+                }
+            }
+        })
     }
 
     private fun configureUI() {
@@ -225,7 +268,6 @@ class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
                 mManual = UIMode.KIOSK.mode
                 Toast.makeText(this,"Kiosk Mode", Toast.LENGTH_SHORT).show()
                 fullnameTextView.isEnabled = false
-                cidTextView.isEnabled = false
                 faceImageView.isEnabled = false
 
             }
@@ -234,7 +276,6 @@ class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
                 mManual = UIMode.STAFF.mode
                 Toast.makeText(this,"Staff Mode", Toast.LENGTH_SHORT).show()
                 fullnameTextView.isEnabled = true
-                cidTextView.isEnabled = true
                 faceImageView.isEnabled = true
 
             }
@@ -281,9 +322,7 @@ class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
 
                     override fun OnReady(device: SmartCardDevice) {
 
-                        if (task.status != AsyncTask.Status.RUNNING) {
-                            task.execute()
-                        }
+
                     }
 
                     override fun OnDetached(device: SmartCardDevice) {
@@ -306,16 +345,12 @@ class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
                     val info = thaiSmartCard.personalInformation
 
                     if (info != null) {
-                        cidTextView.setText(info.PersonalID)
+
                         fullnameTextView.setText(info.NameTH)
                         faceImageView.setImageBitmap(thaiSmartCard.personalPicture)
-                        showQRCodeDialog()
+
                         updateUI()
                         isTakePhoto = true
-
-                        mDob = info.BirthDate
-                        mGender = info.Gender
-                        mAddress = info.Address
 
                         card_status = CARD_READ
 
@@ -330,6 +365,7 @@ class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
                 card_status = CARD_DETACHED
             }
         } else {
+
         }
     }
 
@@ -361,62 +397,12 @@ class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
         }
     }
 
-    private fun showQRCodeDialog() {
-
-        val dialogBuilder = AlertDialog.Builder(this)
-        val dialogView = this.layoutInflater.inflate(R.layout.dialog_qr_code, null)
-        dialogBuilder.setView(dialogView)
-
-        val speakerButton = dialogView.findViewById<Button>(R.id.speakerButton)
-
-        if (mainViewModel.getUIMode() == UIMode.KIOSK.mode) {
-
-            speakerButton.visibility = View.GONE
-        } else {
-            speakerButton.visibility = View.VISIBLE
-        }
-
-
-        val cameraLayout = dialogView.findViewById<FrameLayout>(R.id.frame_layout_camera)
-        mScannerView = ZXingScannerView(this)
-        mScannerView.setAutoFocus(true)
-        mScannerView.setResultHandler(this)
-        mScannerView.startCamera(1)
-        cameraLayout.addView(mScannerView)
-
-        qrCodeDialog = dialogBuilder.create()
-        qrCodeDialog.show()
-
-        qrCodeDialog.setOnDismissListener {
-            Log.d(TAG, "Dismiss Stop Camera")
-            mScannerView.stopCamera()
-        }
-
-        speakerButton.setOnClickListener {
-
-            mRegType = "SPEAKER"
-
-            codeTextView.setText(mRegType)
-            regTypeTextView.text = mRegType
-            zoneTextView.text =  "Zone -"
-
-            qrCodeDialog.dismiss()
-            updateUI()
-        }
-    }
-
-
     override fun onStart() {
-      //  mScannerView.startCamera()
+
         doRequestPermission()
         super.onStart()
     }
 
-    override fun onPause() {
-        //mScannerView.stopCamera()
-
-        super.onPause()
-    }
 
     override fun onDestroy() {
         task.cancel(false)
@@ -425,7 +411,6 @@ class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
 
     override fun onResume() {
      //   reset()
-        configureUI()
         updateConnection()
         updateUI()
         if (task.status != AsyncTask.Status.RUNNING) {
@@ -460,69 +445,8 @@ class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
         }
     }
 
-    override fun handleResult(rawResult: Result?) {
-        Log.d(TAG, "rawResult : ${rawResult.toString()}")
-       // codeTextView.setText(rawResult?.text)
-
-        val qrDialog: android.app.AlertDialog? = SpotsDialog.Builder()
-            .setContext(this)
-            .setMessage("Checking for QR Code...")
-            .setCancelable(false)
-            .build()
-            .apply {
-                show()
-            }
-
-        mainViewModel.checkQRCode(rawResult.toString()).observe(this, Observer { either ->
-            if (either?.status == Status.SUCCESS && either.data != null) {
-
-                Log.d(TAG, "${either.data}")
-
-                if (either.data.ret == 0) {
-
-                    codeTextView.setText(rawResult?.text)
-                    regTypeTextView.text = either.data.data.regtype
-                    zoneTextView.text =  "Zone ${either.data.data.zone}"
-
-                    mQRCode = rawResult.toString()
-                    mRegType = either.data.data.regtype
-
-
-                } else {
-                    codeTextView.setText("")
-                    regTypeTextView.text = ""
-                    zoneTextView.text =  ""
-
-                    mQRCode = ""
-                    mRegType = ""
-                    Toast.makeText( this, "Could not found Code",Toast.LENGTH_SHORT).show()
-                }
-
-                qrDialog?.dismiss()
-
-            } else {
-                if (either?.error == ApiError.QRCODE) {
-                    Toast.makeText(this, "Could connect to server.", Toast.LENGTH_SHORT).show()
-                }
-
-                codeTextView.setText("")
-                regTypeTextView.text = ""
-                zoneTextView.text =  ""
-
-                mQRCode = ""
-                mRegType = ""
-
-                qrDialog?.dismiss()
-            }
-        })
-
-        qrCodeDialog.dismiss()
-        updateUI()
-
-    }
-
     private fun updateUI() {
-        if(fullnameTextView.text!!.isNotEmpty() && cidTextView.text!!.isNotEmpty() && codeTextView.text!!.isNotEmpty() && isTakePhoto) {
+        if(fullnameTextView.text!!.isNotEmpty() && visiteeTextView.text!!.isNotEmpty() && cardNumberDropdown.text!!.isNotEmpty() && isTakePhoto) {
             enableRegisterButton()
         } else {
             disableRegisterButton()
@@ -542,31 +466,8 @@ class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
         isTakePhoto = false
         faceImageView.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_face_image))
         fullnameTextView.setText("")
-        cidTextView.setText("")
-        codeTextView.setText("")
-        regTypeTextView.text = ""
-        zoneTextView.text =  ""
-        telTextView.setText("")
-        emailTextView.setText("")
-        companyTextView.setText("")
-
-        mAddress = ""
-        mCountry = ""
-        mDob = ""
-        mEmail = ""
-        mFacebook_id = ""
-        mGender = ""
-        mLine_id = ""
-        mManual = ""
-        mName = ""
-        mNation = ""
-        mPersonID = ""
-        mPicture = ""
-        mProvince = ""
-        mQRCode = ""
-        mRegType = ""
-        mTel = ""
-        mCompany = ""
+        visiteeTextView.setText("")
+        cardNumberDropdown.setText("")
 
         updateUI()
     }
@@ -691,9 +592,9 @@ class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
 
     private fun register() {
 
-        Log.d(TAG, "MQR : ${mQRCode}")
+     //   Log.d(TAG, "MQR : ${mQRCode}")
 
-        mPicture = getImageBase64(faceImageView)
+        val image = getImageBase64(faceImageView)
 
         val registDialog: android.app.AlertDialog? = SpotsDialog.Builder()
             .setContext(this)
@@ -704,79 +605,48 @@ class MainActivity : AppCompatActivity(), ZXingScannerView.ResultHandler {
                 show()
             }
 
-        mainViewModel.register(mAddress, mCountry, mDob, mEmail, mFacebook_id, mGender, mLine_id, mManual, mName, mNation,
-            mPersonID, mPicture, mProvince, mQRCode, mRegType, mTel, mCompany).observe(this, Observer { either ->
+
+        mainViewModel.register(image, fullName, visiteeName, cardNumber).observe(this, Observer<Either<RegisterResponse>> { either ->
             if (either?.status == Status.SUCCESS && either.data != null) {
-                Log.d(TAG, "${either.data}")
-                if (either.data.ret == 0) {
-                    Toast.makeText(this, "Register Successful", Toast.LENGTH_SHORT).show()
-                    showMapDialog(either.data.data.regtype.toUpperCase())
-                   // reset()
+                if (either.data.rtn == 0) {
+                    if (either.data.result.first().rtn == 0) {
+                        Toast.makeText(this, "Register Successful ${either.data.result.first().message}", Toast.LENGTH_SHORT).show()
+                    }
 
                 } else {
-                    Toast.makeText(this, either.data.msg, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Failed to Register ${either.data.message}", Toast.LENGTH_SHORT).show()
                 }
-                registDialog?.dismiss()
-
             } else {
                 if (either?.error == ApiError.REGISTER) {
-                    Toast.makeText(this, "Could connect to server.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Could not connect to server.", Toast.LENGTH_SHORT).show()
                 }
-                registDialog?.dismiss()
             }
+            registDialog?.dismiss()
         })
+
+//        mainViewModel.register(mAddress, mCountry, mDob, mEmail, mFacebook_id, mGender, mLine_id, mManual, mName, mNation,
+//            mPersonID, mPicture, mProvince, mQRCode, mRegType, mTel, mCompany).observe(this, Observer { either ->
+//            if (either?.status == Status.SUCCESS && either.data != null) {
+//                Log.d(TAG, "${either.data}")
+//                if (either.data.ret == 0) {
+//                    Toast.makeText(this, "Register Successful", Toast.LENGTH_SHORT).show()
+//
+//                   // reset()
+//
+//                } else {
+//                    Toast.makeText(this, either.data.msg, Toast.LENGTH_SHORT).show()
+//                }
+//                registDialog?.dismiss()
+//
+//            } else {
+//                if (either?.error == ApiError.REGISTER) {
+//                    Toast.makeText(this, "Could connect to server.", Toast.LENGTH_SHORT).show()
+//                }
+//                registDialog?.dismiss()
+//            }
+//        })
     }
 
-
-    private fun showMapDialog(regType: String) {
-
-        Log.d(TAG, "showMapDialog")
-        val dialogBuilder = AlertDialog.Builder(this)
-        val dialogView = this.layoutInflater.inflate(R.layout.dialog_map_result, null)
-        dialogBuilder.setView(dialogView)
-        dialogBuilder.setCancelable(true)
-
-        val mapImageView = dialogView.findViewById<ImageView>(R.id.mapImageView)
-        val mapCloseButton = dialogView.findViewById<Button>(R.id.mapCloseButton)
-        
-        when(regType) {
-            "VVIP" -> {
-                Log.d(TAG, "MAP VVIP")
-                mapImageView.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.vvip_map))
-            }
-            "VIP" -> {
-                Log.d(TAG, "MAP VIP")
-                mapImageView.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.vip_map))
-            }
-            "REGULAR" -> {
-                Log.d(TAG, "MAP REGULAR")
-                mapImageView.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.regular_map))
-            }
-            "PRESS" -> {
-                Log.d(TAG, "MAP PRESS")
-                mapImageView.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.press_map))
-            }
-            else -> {
-                Log.d(TAG, "MAP ELSE")
-                mapImageView.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.vvip_map))
-            }
-        }
-
-        mapCloseButton.setOnClickListener {
-            mapDialog.dismiss()
-        }
-
-        mapImageView.setOnClickListener {
-            mapDialog.dismiss()
-        }
-        
-        mapDialog = dialogBuilder.create()
-        mapDialog.show()
-
-        mapDialog.setOnDismissListener {
-            reset()
-        }
-    }
 
 }
 

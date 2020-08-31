@@ -2,12 +2,12 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.MaterialComponents.Light.DarkActionBar">
-        <item name="colorPrimary">#4A148C</item>
-        <item name="colorPrimaryDark">#12005E</item>
-        <item name="colorPrimaryVariant">#7C43BD</item>
-        <item name="colorSecondary">#4A148C</item>
+        <item name="colorPrimary">#ffb300</item>
+        <item name="colorPrimaryDark">#c68400</item>
+        <item name="colorPrimaryVariant">#ffe54c</item>
+        <item name="colorSecondary">#ffb300</item>
         <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="colorError">#7c43bd</item>
+        <item name="colorError">#ffe54c</item>
         <item name="colorOnError">#FFFFFF</item>
         <item name="colorSurface">#FFFFFF</item>
         <item name="colorOnSurface">#212121</item>

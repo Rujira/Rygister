@@ -10,11 +10,66 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 object Injection {
 
     fun provideRepository(): Repository = RemoteRepository
 
+    //Login Section
+    private fun provideRetrofitLogin(): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(AppPrefs.getServiceURL().toString())
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(provideOkHttpClientForLogin())
+            .build()
+    }
+
+    private fun provideOkHttpClientForLogin(): OkHttpClient {
+
+        val x509TrustManager = object : X509TrustManager {
+            override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+
+            }
+
+            override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+
+            }
+
+            override fun getAcceptedIssuers(): Array<X509Certificate> {
+                return arrayOf()
+            }
+        }
+
+        val trustManagers = arrayOf<TrustManager>(x509TrustManager)
+
+        val sslContext = SSLContext.getInstance("TLS")
+        sslContext.init(null, trustManagers, null)
+
+        val httpClient = OkHttpClient.Builder()
+        httpClient.sslSocketFactory(sslContext.socketFactory, x509TrustManager)
+        httpClient.hostnameVerifier {_, _ -> true}
+        httpClient.addInterceptor(provideLoggingInterceptor())
+
+        httpClient.addInterceptor { chain ->
+            val request = chain.request()
+                .newBuilder()
+                .addHeader("content-type", "application/json;charset=UTF-8")
+                .build()
+
+            chain.proceed(request)
+        }
+        return httpClient.build()
+    }
+
+    fun provideLoginAPI(): RygisterApi {
+        return provideRetrofitLogin().create(RygisterApi::class.java)
+    }
+
+    //General API Section
     private fun provideRetrofit(): Retrofit {
         return Retrofit.Builder()
             .baseUrl(AppPrefs.getServiceURL().toString())
@@ -36,15 +91,35 @@ object Injection {
 
     private fun provideOkHttpClient(): OkHttpClient {
 
+        val x509TrustManager = object : X509TrustManager {
+            override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+
+            }
+
+            override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+
+            }
+
+            override fun getAcceptedIssuers(): Array<X509Certificate> {
+                return arrayOf()
+            }
+        }
+
+        val trustManagers = arrayOf<TrustManager>(x509TrustManager)
+
+        val sslContext = SSLContext.getInstance("TLS")
+        sslContext.init(null, trustManagers, null)
+
         val httpClient = OkHttpClient.Builder()
+        httpClient.sslSocketFactory(sslContext.socketFactory, x509TrustManager)
+        httpClient.hostnameVerifier {_, _ -> true}
         httpClient.addInterceptor(provideLoggingInterceptor())
-        val username = AppPrefs.getHeaderUserName().toString()
-        val password = AppPrefs.getHeaderPassword().toString()
 
         httpClient.addInterceptor { chain ->
             val request = chain.request()
                 .newBuilder()
-                .addHeader("Authorization", Credentials.basic(username, password))
+                .addHeader("Authorization", "Bearer ${AppPrefs.getToken()}")
+                .addHeader("Backend-Authorization", "${AppPrefs.getBackendToken()}")
                 .build()
 
             chain.proceed(request)

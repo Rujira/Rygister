@@ -1,8 +1,9 @@
 <resources>
     <string name="app_name">Self Registration</string>
-    <string name="cid_string">CID</string>
-    <string name="name_string">Name</string>
-    <string name="zone_string">Zone</string>
+    <string name="card_number_string">Card Number</string>
+    <string name="name_string">ชื่อผู้มาติดต่อ</string>
+    <string name="contact_name_string">ชื่อผู้ติดต่อ</string>
+    <string name="zone_string">Card Number</string>
     <string name="confirm_string">Confirm</string>
     <string name="image_description">Image Description</string>
     <string name="content_description">Content Description</string>
