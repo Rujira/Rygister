@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.drawable.BitmapDrawable
 import android.hardware.usb.UsbManager
 import android.net.Uri
@@ -23,14 +24,21 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.codinghub.apps.rygister.R
+import com.codinghub.apps.rygister.faceutillity.camera.CameraSourcePreview
+import com.codinghub.apps.rygister.faceutillity.camera.GraphicOverlay
+import com.codinghub.apps.rygister.faceutillity.facedetection.GraphicFaceTracker
+import com.codinghub.apps.rygister.faceutillity.facedetection.GraphicFaceTrackerFactory
 import com.codinghub.apps.rygister.model.AppPrefs
+import com.codinghub.apps.rygister.model.DeptResponse.DeptResponse
 import com.codinghub.apps.rygister.model.UIMode
+import com.codinghub.apps.rygister.model.compareface.CompareFaceResponse
 import com.codinghub.apps.rygister.model.error.ApiError
 import com.codinghub.apps.rygister.model.error.Either
 import com.codinghub.apps.rygister.model.error.Status
@@ -38,15 +46,52 @@ import com.codinghub.apps.rygister.model.login.LoginResponse
 import com.codinghub.apps.rygister.model.register.RegisterResponse
 import com.codinghub.apps.rygister.thcard.SmartCardDevice
 import com.codinghub.apps.rygister.thcard.ThaiSmartCard
+import com.codinghub.apps.rygister.utilities.SafeClickListener
+import com.codinghub.apps.rygister.utilities.Exif
 import com.codinghub.apps.rygister.viewmodel.MainViewModel
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
+import com.google.android.gms.vision.CameraSource
+import com.google.android.gms.vision.MultiProcessor
+import com.google.android.gms.vision.face.FaceDetector
+import com.google.android.material.snackbar.Snackbar
 import dmax.dialog.SpotsDialog
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.choose_image_sheet.view.*
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.io.InputStream
+import java.math.RoundingMode
+import java.text.DecimalFormat
 import java.util.*
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerListener, GraphicFaceTracker.GraphicFaceTrackerDismissListener {
+
+    private val listener: OnFaceSnappedListener? = null
+
+    interface OnFaceSnappedListener {
+        fun faceSnapped()
+    }
+
+    private val dismissListener: OnDialogFaceDismissListener? = null
+    interface OnDialogFaceDismissListener {
+        fun dismissDialog()
+    }
+
+    private val MAX_PREVIEW_WIDTH = 1024
+    private val MAX_PREVIEW_HEIGHT = 1024
+    private var mCameraSource: CameraSource? = null
+    private var mPreview: CameraSourcePreview? = null
+    private var mGraphicOverlay: GraphicOverlay? = null
+
+    private var picture1: String = ""
+    private var picture2: String = ""
+
+    private var isTakingPhoto: Boolean = false
+
+    private lateinit var faceDialog: AlertDialog
+    private lateinit var loadingDialog: AlertDialog
+    private lateinit var compareResultDialog: AlertDialog
 
     private lateinit var mainViewModel: MainViewModel
     internal val TAG = MainActivity::class.java.simpleName
@@ -74,12 +119,20 @@ class MainActivity : AppCompatActivity() {
     private var image_uri: Uri? = null
     private var exif_data: Uri? = null
 
+    private lateinit var comparedPersonImage: Bitmap
     private lateinit var snapImage: Bitmap
 
     private val PERMISSION_CODE = 1000
     private val IMAGE_CAPTURE_CODE = 1001
     private val IMAGE_GALLERY_CODE = 1002
 
+    companion object {
+        private val TAG = "FaceTracker"
+        private val RC_HANDLE_GMS = 9001
+        private val RC_HANDLE_CAMERA_PERM = 2
+    }
+
+    private var deptIDList = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -101,6 +154,13 @@ class MainActivity : AppCompatActivity() {
             task.execute()
         }
 
+        val rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+        if (rc == PackageManager.PERMISSION_GRANTED) {
+
+        } else {
+            requestCameraPermission()
+        }
+
         faceImageView.setOnClickListener {
             showChooseImageDialog()
         }
@@ -117,6 +177,14 @@ class MainActivity : AppCompatActivity() {
         visiteeTextView.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 visiteeName = visiteeTextView.text.toString()
+                updateUI()
+            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
+        })
+
+        cardNumberDropdown.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
                 updateUI()
             }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
@@ -159,7 +227,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         registerButton.setOnClickListener {
-            register()
+            if (mainViewModel.getFaceCompareMode()) {
+                showFaceDialog()
+            }  else {
+                register(false)
+            }
+           //
         }
     }
 
@@ -174,27 +247,21 @@ class MainActivity : AppCompatActivity() {
         menuInflater.inflate(R.menu.main, menu)
         return true
     }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.action_connect -> {
                 performLoginRequest()
                 true
             }
-
             R.id.action_settings -> {
                 showSettings()
                 true
             }
-
-
             else -> super.onOptionsItemSelected(item)
         }
     }
 
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
     private fun showSettings() {
 
         val dialogBuilder = AlertDialog.Builder(this)
@@ -207,19 +274,39 @@ class MainActivity : AppCompatActivity() {
         val serviceURLTextView = dialogView.findViewById<EditText>(R.id.serviceURLEditText)
         val usernameTextView = dialogView.findViewById<EditText>(R.id.usernameEditText)
         val passwordTextView = dialogView.findViewById<EditText>(R.id.passwordEditText)
-        val deptTextView = dialogView.findViewById<EditText>(R.id.departmentEditText)
+       // val deptTextView = dialogView.findViewById<EditText>(R.id.departmentEditText)
+        val departmentDropdown = dialogView.findViewById<AutoCompleteTextView>(R.id.departmentDropdown)
+
+
+        Log.d(TAG, "Count ${deptIDList.size}")
+
+        val faceCompareSwitch = dialogView.findViewById<Switch>(R.id.faceCompareSwitch)
+
+        faceCompareSwitch.isChecked = mainViewModel.getFaceCompareMode()
 
         serviceURLTextView.text = Editable.Factory.getInstance().newEditable(mainViewModel.getServiceURL())
         usernameTextView.text = Editable.Factory.getInstance().newEditable(mainViewModel.getUsername())
         passwordTextView.text = Editable.Factory.getInstance().newEditable(mainViewModel.getPassword())
-        deptTextView.text = Editable.Factory.getInstance().newEditable(mainViewModel.getDept())
+        departmentDropdown.setText(mainViewModel.getDept())
+        //departmentDropdown.text = Editable.Factory.getInstance().newEditable(mainViewModel.getDept())
+     //   deptTextView.text = Editable.Factory.getInstance().newEditable(mainViewModel.getDept())
 
+        val adapter = ArrayAdapter(applicationContext, R.layout.dropdown_menu_pop_item, deptIDList)
+        departmentDropdown.setAdapter(adapter)
+
+        faceCompareSwitch.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                mainViewModel.saveFaceCompareMode(true)
+            } else {
+                mainViewModel.saveFaceCompareMode(false)
+            }
+        }
         dialogBuilder.setPositiveButton("Save Change") {_, _->
 
             mainViewModel.saveServiceURL(serviceURLTextView.text.toString())
             mainViewModel.saveUsername(usernameTextView.text.toString())
             mainViewModel.savePassword(passwordTextView.text.toString())
-            mainViewModel.saveDept(deptTextView.text.toString())
+            mainViewModel.saveDept(departmentDropdown.text.toString())
 
         }
 
@@ -242,12 +329,14 @@ class MainActivity : AppCompatActivity() {
         val username = mainViewModel.getUsername()
         val password = mainViewModel.getPassword()
 
+        deptIDList.clear()
         mainViewModel.performLoginRequest(username!!, password!!).observe(this, Observer<Either<LoginResponse>> { either ->
             if (either?.status == Status.SUCCESS && either.data != null) {
                 if (either.data.rtn == 0) {
                     Log.d(TAG, "${either.data.result}")
                     mainViewModel.saveToken(either.data.result.web_authorization)
                     mainViewModel.saveBackendToken(either.data.result.backend_authorization)
+                    getDeptID()
                     Toast.makeText(this, "Successful Login", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(this, "Failed to Login ${either.data.message}", Toast.LENGTH_SHORT).show()
@@ -255,6 +344,29 @@ class MainActivity : AppCompatActivity() {
             } else {
                 if (either?.error == ApiError.LOGIN) {
                     Toast.makeText(this, "Could not connect to server!", Toast.LENGTH_SHORT).show()
+                }
+            }
+        })
+    }
+
+    private fun getDeptID() {
+
+        mainViewModel.getDeptID().observe(this, Observer<Either<DeptResponse>>{either ->
+            if (either?.status == Status.SUCCESS && either.data != null) {
+                if (either.data.rtn == 0) {
+                    Log.d(TAG, "${either.data.result}")
+
+                    for (departmentID in either.data.result.first().children) {
+                        deptIDList.add(departmentID.key)
+                    }
+
+                    Toast.makeText(this, "Successful Get Department", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Failed to Get Department ${either.data.message}", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                if (either?.error == ApiError.LOGIN) {
+                    Toast.makeText(this, "Could not connect to server for department!", Toast.LENGTH_SHORT).show()
                 }
             }
         })
@@ -347,10 +459,31 @@ class MainActivity : AppCompatActivity() {
                     if (info != null) {
 
                         fullnameTextView.setText(info.NameTH)
-                        faceImageView.setImageBitmap(thaiSmartCard.personalPicture)
+
+                        comparedPersonImage = thaiSmartCard.personalPicture
+                        faceImageView.setImageBitmap(comparedPersonImage)
+
+                        isTakePhoto = true
+
+                        val stream = ByteArrayOutputStream()
+                        thaiSmartCard.personalPicture.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                        val byteArray = stream.toByteArray()
+
+                        val base64String: String
+
+                        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O) {
+                            Log.d(TAG, "Android O")
+                            base64String = Base64.getEncoder().encodeToString(byteArray)
+
+                        } else {
+                            Log.d(TAG, "Android Other")
+                            base64String = android.util.Base64.encodeToString(byteArray, android.util.Base64.NO_WRAP)
+                        }
+
+                        picture1 = base64String
 
                         updateUI()
-                        isTakePhoto = true
+
 
                         card_status = CARD_READ
 
@@ -407,6 +540,9 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         task.cancel(false)
         super.onDestroy()
+        if (mCameraSource != null) {
+            mCameraSource?.release()
+        }
     }
 
     override fun onResume() {
@@ -417,6 +553,7 @@ class MainActivity : AppCompatActivity() {
             task.execute()
         }
         super.onResume()
+        mPreview?.stop()
     }
 
     private fun doRequestPermission() {
@@ -439,10 +576,17 @@ class MainActivity : AppCompatActivity() {
                     // Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
                 }
             }
+            RC_HANDLE_CAMERA_PERM -> {
+                Log.d(TAG, "Got unexpected permission result: " + requestCode)
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+                return
+            }
+
             else -> {
                 /* nothing to do in here */
             }
         }
+
     }
 
     private fun updateUI() {
@@ -468,6 +612,9 @@ class MainActivity : AppCompatActivity() {
         fullnameTextView.setText("")
         visiteeTextView.setText("")
         cardNumberDropdown.setText("")
+
+        picture1 = ""
+        picture2 = ""
 
         updateUI()
     }
@@ -534,12 +681,15 @@ class MainActivity : AppCompatActivity() {
             isTakePhoto = true
 
             val ins : InputStream? = contentResolver.openInputStream(image_uri)
-            val snapImage : Bitmap? = BitmapFactory.decodeStream(ins)
+            val takedPersonImage : Bitmap? = BitmapFactory.decodeStream(ins)
+
             ins?.close()
 
-            if (snapImage != null) {
-                faceImageView.setImageBitmap(mainViewModel.modifyImageOrientation(this ,snapImage, image_uri!!))
-
+            if (takedPersonImage != null) {
+                faceImageView.setImageBitmap(mainViewModel.modifyImageOrientation(this ,takedPersonImage, image_uri!!))
+                comparedPersonImage = mainViewModel.modifyImageOrientation(this, takedPersonImage, image_uri!!)
+                picture1 = getImageBase64(faceImageView)
+                contentResolver.delete(image_uri!!, null, null)
             }
         }
 
@@ -549,9 +699,11 @@ class MainActivity : AppCompatActivity() {
 
             exif_data = data?.data!!
             val ins: InputStream? = contentResolver.openInputStream(exif_data)
-            snapImage = BitmapFactory.decodeStream(ins)
+            val takedPersonImage  = BitmapFactory.decodeStream(ins)
 
-            faceImageView.setImageBitmap(mainViewModel.modifyImageOrientation(this ,snapImage, exif_data!!))
+            faceImageView.setImageBitmap(mainViewModel.modifyImageOrientation(this ,takedPersonImage, exif_data!!))
+            comparedPersonImage = mainViewModel.modifyImageOrientation(this ,takedPersonImage, exif_data!!)
+            picture1 = getImageBase64(faceImageView)
         }
 
         updateUI()
@@ -590,9 +742,291 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun register() {
+    override fun faceSnapped() {
+        listener?.faceSnapped()
+        Log.d(TAG, "Snapped")
+        captureImage()
+    }
+
+
+
+    private fun captureImage() {
+        Log.d(TAG, "Capture")
+
+        if (!isTakingPhoto) {
+            isTakingPhoto = true
+            mCameraSource?.takePicture(null, CameraSource.PictureCallback { data ->
+                Log.d(TAG, "PictureCallback")
+
+                val orientation = Exif.getOrientation(data)
+                val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size)
+
+                snapImage = when (orientation) {
+                    90 -> rotateImage(bitmap, 90f)
+                    180 -> rotateImage(bitmap, 180f)
+                    270 -> rotateImage(bitmap, 270f)
+                    else -> rotateImage(bitmap, 0f)
+                }
+
+                val resizedBitmap = resizeBitmap(snapImage, snapImage.width / 2, snapImage.height / 2)
+
+                val stream = ByteArrayOutputStream()
+                resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
+                val byteArray = stream.toByteArray()
+
+                //  var base64String: String
+
+                if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O) {
+                    Log.d(TAG, "Android O")
+                    picture2 = Base64.getEncoder().encodeToString(byteArray)
+
+                } else {
+                    Log.d(TAG, "Android Other")
+                    picture2 = android.util.Base64.encodeToString(byteArray, android.util.Base64.NO_WRAP)
+                }
+
+                compareFace()
+            })
+        }
+    }
+
+    private fun showLoadingDialogWith(message: String){
+
+        loadingDialog = SpotsDialog.Builder()
+            .setContext(this)
+            .setMessage(message)
+            .setCancelable(false)
+            .build()
+            .apply {
+                show()
+            }
+    }
+
+    private fun rotateImage(bitmap: Bitmap, angle: Float): Bitmap {
+        val mat : Matrix? = Matrix()
+        mat?.postRotate(angle)
+
+        return Bitmap.createBitmap(bitmap , 0, 0, bitmap.width, bitmap.height, mat, true)
+    }
+
+    private fun dismissLoadingDialog() {
+        loadingDialog.dismiss()
+    }
+
+    private fun compareFace() {
+
+        if (faceDialog.isShowing) {
+            faceDialog.dismiss()
+        }
+
+      //  picture1 = getImageBase64(faceImageView)
+
+        showLoadingDialogWith("กำลังเปรียบเทียบใบหน้า")
+
+        mainViewModel.compareFace(picture1, picture2)
+            .observe(this, Observer<Either<CompareFaceResponse>> { either ->
+                if (either?.status == Status.SUCCESS && either.data != null) {
+                    if (either.data.ret == 0) {
+                        // compareTextView.text = either.data.similarity.toString()
+                        //Toast.makeText(this, "Similarity : ${either.data.similarity}", Toast.LENGTH_SHORT).show()
+                        showCompareResultDialog(either.data)
+                    } else {
+                        // emptyStudentLayout.visibility = View.VISIBLE
+                        Toast.makeText(this, "Error comparing face.", Toast.LENGTH_SHORT).show()
+                    }
+
+                } else {
+                    if (either?.error == ApiError.COMPARE_FACE) {
+                        Toast.makeText(this, "Error comparing face.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                dismissLoadingDialog()
+            })
+    }
+
+    override fun dismissDialog() {
+        dismissListener?.dismissDialog()
+    }
+
+    private fun requestCameraPermission() {
+        Log.w(TAG, "Camera permission is not granted. Requesting permission")
+        val permissions = arrayOf(Manifest.permission.CAMERA)
+        if (!ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.CAMERA)) {
+            ActivityCompat.requestPermissions(this, permissions,
+                RC_HANDLE_CAMERA_PERM
+            )
+            return
+        }
+
+        val thisActivity = this
+        val listener = View.OnClickListener {
+            ActivityCompat.requestPermissions(thisActivity, permissions,
+                RC_HANDLE_CAMERA_PERM
+            )
+        }
+
+        Toast.makeText(this,R.string.permission_camera_rationale, Toast.LENGTH_SHORT).show()
+
+        mGraphicOverlay?.let {
+            Snackbar.make(
+                it, R.string.permission_camera_rationale,
+                Snackbar.LENGTH_INDEFINITE)
+                .setAction(R.string.ok, listener)
+                .show()
+        }
+    }
+
+    private fun showFaceDialog() {
+
+        val dialogBuilder = AlertDialog.Builder(this)
+        val dialogView = this.layoutInflater.inflate(R.layout.dialog_face, null)
+        dialogBuilder.setView(dialogView)
+        dialogBuilder.setCancelable(true)
+
+        val mPreview = dialogView.findViewById<View>(R.id.preview) as CameraSourcePreview
+        val mGraphicOverlay = dialogView.findViewById<View>(R.id.faceOverlay) as GraphicOverlay
+        val autoSnapButton = dialogView.findViewById<Button>(R.id.autoSnapButton)
+        val compareButton = dialogView.findViewById<Button>(R.id.compareButton)
+
+        if (AppPrefs.getAutoSnapMode()) {
+            autoSnapButton.visibility = View.VISIBLE
+            compareButton.visibility = View.GONE
+        } else {
+            autoSnapButton.visibility = View.GONE
+            compareButton.visibility = View.VISIBLE
+        }
+
+        compareButton.setSafeOnClickListener {
+            val rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            if (rc == PackageManager.PERMISSION_GRANTED) {
+                faceSnapped()
+            }
+        }
+
+        val rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+        if (rc == PackageManager.PERMISSION_GRANTED) {
+
+            val context = applicationContext
+            val detector = FaceDetector.Builder(context)
+                .setLandmarkType(FaceDetector.ALL_LANDMARKS)
+                .setClassificationType(FaceDetector.ALL_CLASSIFICATIONS)
+                .setTrackingEnabled(true)
+                .setMode(FaceDetector.ACCURATE_MODE)
+                .build()
+            detector.setProcessor(
+                MultiProcessor.Builder(mGraphicOverlay?.let {
+                    GraphicFaceTrackerFactory(
+                        it, this
+                    )
+                }).build())
+
+            if (!detector.isOperational) {
+                Log.w(TAG, "Face detector dependencies are not yet available.")
+            }
+
+            mCameraSource = CameraSource.Builder(context, detector)
+                .setRequestedPreviewSize(MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGHT)
+                .setFacing(CameraSource.CAMERA_FACING_FRONT)
+                .setRequestedFps(60.0f)
+                .setAutoFocusEnabled(true)
+                .build()
+
+            val code = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(
+                applicationContext)
+            if (code != ConnectionResult.SUCCESS) {
+                val dlg = GoogleApiAvailability.getInstance().getErrorDialog(this, code, RC_HANDLE_GMS)
+                dlg.show()
+            }
+
+            if (mCameraSource != null) {
+                try {
+                    mGraphicOverlay?.let { mPreview!!.start(mCameraSource!!, it) }
+                } catch (e: IOException) {
+                    Log.e(TAG, "Unable to start camera source.", e)
+                    mCameraSource!!.release()
+                    mCameraSource = null
+                }
+            }
+
+        } else {
+            requestCameraPermission()
+        }
+
+        faceDialog = dialogBuilder.create()
+        faceDialog.show()
+
+        faceDialog.setOnDismissListener {
+            mPreview.stop()
+
+            if (mCameraSource != null) {
+                mCameraSource!!.release()
+            }
+
+            isTakingPhoto = false
+        }
+
+    }
+
+    private fun View.setSafeOnClickListener(onSafeClick: (View) -> Unit) {
+        val safeClickListener = SafeClickListener {
+            onSafeClick(it)
+        }
+        setOnClickListener(safeClickListener)
+    }
+
+    private fun showCompareResultDialog(faceResponse : CompareFaceResponse) {
+
+        val dialogBuilder = AlertDialog.Builder(this)
+        val dialogView = this.layoutInflater.inflate(R.layout.dialog_compare, null)
+        dialogBuilder.setView(dialogView)
+        dialogBuilder.setCancelable(true)
+
+        val imageView1 = dialogView.findViewById<ImageView>(R.id.compareImageView1)
+        val imageView2 = dialogView.findViewById<ImageView>(R.id.compareImageView2)
+        val similarityTextView = dialogView.findViewById<TextView>(R.id.similarityTextView)
+        val matchImageView = dialogView.findViewById<ImageView>(R.id.matchImageView)
+        val descTextView = dialogView.findViewById<TextView>(R.id.descTextView)
+        val registerButton = dialogView.findViewById<Button>(R.id.registerButton)
+
+        imageView1.setImageBitmap(comparedPersonImage)
+        imageView2.setImageBitmap(snapImage)
+
+        val df = DecimalFormat("##.##")
+        df.roundingMode = RoundingMode.CEILING
+        similarityTextView.text = df.format(faceResponse.similarity)
+
+        if (faceResponse.similarity >= AppPrefs.getSimilarity()) {
+            //Match
+            matchImageView.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_match))
+            descTextView.text = "This face is similar to the face on the card."
+            registerButton.isEnabled = true
+        } else {
+            matchImageView.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_mismatch))
+            descTextView.text = "This face is NOT similar to the face on the card."
+            registerButton.isEnabled = false
+        }
+
+        registerButton.setOnClickListener {
+            //addNewPerson()
+            register(true)
+        }
+
+        compareResultDialog = dialogBuilder.create()
+        compareResultDialog.show()
+
+        compareResultDialog.setOnDismissListener {
+            fullName = ""
+            picture1 = ""
+            picture2 = ""
+        }
+    }
+
+
+    private fun register(isFaceCompare: Boolean) {
 
      //   Log.d(TAG, "MQR : ${mQRCode}")
+
 
         val image = getImageBase64(faceImageView)
 
@@ -622,29 +1056,12 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             registDialog?.dismiss()
+            if (isFaceCompare) {
+                compareResultDialog?.dismiss()
+            }
+
         })
 
-//        mainViewModel.register(mAddress, mCountry, mDob, mEmail, mFacebook_id, mGender, mLine_id, mManual, mName, mNation,
-//            mPersonID, mPicture, mProvince, mQRCode, mRegType, mTel, mCompany).observe(this, Observer { either ->
-//            if (either?.status == Status.SUCCESS && either.data != null) {
-//                Log.d(TAG, "${either.data}")
-//                if (either.data.ret == 0) {
-//                    Toast.makeText(this, "Register Successful", Toast.LENGTH_SHORT).show()
-//
-//                   // reset()
-//
-//                } else {
-//                    Toast.makeText(this, either.data.msg, Toast.LENGTH_SHORT).show()
-//                }
-//                registDialog?.dismiss()
-//
-//            } else {
-//                if (either?.error == ApiError.REGISTER) {
-//                    Toast.makeText(this, "Could connect to server.", Toast.LENGTH_SHORT).show()
-//                }
-//                registDialog?.dismiss()
-//            }
-//        })
     }
 
 

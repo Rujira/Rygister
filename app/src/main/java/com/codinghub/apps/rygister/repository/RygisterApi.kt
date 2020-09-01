@@ -1,5 +1,6 @@
 package com.codinghub.apps.rygister.repository
 
+import com.codinghub.apps.rygister.model.DeptResponse.DeptResponse
 import com.codinghub.apps.rygister.model.login.LoginRequest
 import com.codinghub.apps.rygister.model.login.LoginResponse
 import com.codinghub.apps.rygister.model.qrcode.QRCodeRequest
@@ -19,6 +20,8 @@ interface RygisterApi {
     @POST("/park/website/login")
     fun rygisterLogin(@Body body: LoginRequest): Call<LoginResponse>
 
+    @GET("/park/website/simpleDept")
+    fun getDeptID(): Call<DeptResponse>
 
     @Headers("Accept: application/json")
     @POST("check_qrcode")

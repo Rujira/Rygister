@@ -9,6 +9,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import com.codinghub.apps.rygister.app.Injection
 import com.codinghub.apps.rygister.model.AppPrefs
+import com.codinghub.apps.rygister.model.DeptResponse.DeptResponse
+import com.codinghub.apps.rygister.model.compareface.CompareFaceRequest
+import com.codinghub.apps.rygister.model.compareface.CompareFaceResponse
 import com.codinghub.apps.rygister.model.error.Either
 import com.codinghub.apps.rygister.model.login.LoginRequest
 import com.codinghub.apps.rygister.model.login.LoginResponse
@@ -25,8 +28,6 @@ import org.json.JSONObject
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = Injection.provideRepository()
-
-
 
     fun performLoginRequest(username: String, password: String) : LiveData<Either<LoginResponse>> {
         val request = LoginRequest(username, password)
@@ -69,35 +70,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
     fun getBackendToken() = AppPrefs.getBackendToken()
 
+    fun getDeptID() : LiveData<Either<DeptResponse>> {
+        return repository.getDeptID()
+    }
+
     fun register(image: String, name: String, visiteeName: String, cardNumber: String): LiveData<Either<RegisterResponse>> {
 
-//        val json = Json {
-//
-//                "face_image_content" to "Non"
-//                "person_information" to Json {
-//                    "name" to name
-//                    "visitee_name" to visiteeName
-//                    "visit_time_type" to 1
-//                    "visit_start_timestamp" to 0
-//                }
-//                "tag_id_list" to JSONArray().apply {  }
-//                "dept_id" to AppPrefs.getDept()
-//                "card_numbers" to JSONArray().apply {
-//                    cardNumber
-//                }
-//        }
+        val personInformation = PersonInformation(name, visiteeName, 1,0)
+        val dept_id = AppPrefs.getDept().toString()
+        val card_numbers = listOf(cardNumber)
 
-
-
-        //Log.d("MAINVIEWMODEL", json.toString())
-
-        var personInformation = PersonInformation(name, visiteeName, 1,0)
-        var dept_id = AppPrefs.getDept().toString()
-        var card_numbers = listOf(cardNumber)
-
-        var tag_id_list = listOf<String>()
+        val tag_id_list = listOf<String>()
         val visitorData = VisitorData(image, personInformation, tag_id_list, dept_id, card_numbers)
-
 
         val request = RegisterRequest(listOf(visitorData))
         return repository.register(request)
@@ -106,25 +90,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun modifyImageOrientation(activity: Activity, bitmap: Bitmap, uri: Uri): Bitmap {
         return repository.modifyImageOrientation(activity, bitmap, uri)
     }
+
+    fun compareFace(picture1: String, picture2: String): LiveData<Either<CompareFaceResponse>> {
+        val request = CompareFaceRequest(picture1, picture2)
+
+        return repository.compareFaces(request)
+    }
+
+    fun saveAutoSnapMode(isEnable: Boolean) {
+        AppPrefs.saveAutoSnapMode(isEnable)
+    }
+
+    fun saveShowBoundingBoxState(isShowBoundingBox: Boolean) {
+        AppPrefs.saveShowBoundingBoxState(isShowBoundingBox)
+    }
+
+    fun saveSnapDistance(distance: Int) {
+        AppPrefs.saveSnapDistance(distance)
+    }
+
+    fun saveSimilarity(similarity: Int) {
+        AppPrefs.saveSimilarity(similarity)
+    }
+
+    fun saveFaceCompareMode(isEnable: Boolean) {
+        AppPrefs.saveFaceCompareMode(isEnable)
+    }
+
+    fun getFaceCompareMode() = AppPrefs.getFaceCompareMode()
 }
 
-class Json() {
-
-    private val json = JSONObject()
-
-    constructor(init: Json.() -> Unit) : this() {
-        this.init()
-    }
-
-    infix fun String.to(value: Json) {
-        json.put(this, value.json)
-    }
-
-    infix fun <T> String.to(value: T) {
-        json.put(this, value)
-    }
-
-    override fun toString(): String {
-        return json.toString()
-    }
-}

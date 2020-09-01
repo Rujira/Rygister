@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Self Registration</string>
+    <string name="app_name">Krungsri Registration</string>
     <string name="card_number_string">Card Number</string>
     <string name="name_string">ชื่อผู้มาติดต่อ</string>
     <string name="contact_name_string">ชื่อผู้ติดต่อ</string>
@@ -7,4 +7,10 @@
     <string name="confirm_string">Confirm</string>
     <string name="image_description">Image Description</string>
     <string name="content_description">Content Description</string>
+    <string name="camera_request_rationale">Camera app requires camera access</string>
+    <string name="identify_face">Identify Face</string>
+    <string name="permission_camera_rationale">Access to the camera is needed for detection</string>
+    <string name="no_camera_permission">This application cannot run because it does not have the camera permission.  The application will now exit.</string>
+    <string name="low_storage_error">Face detector dependencies cannot be downloaded due to low device storage</string>
+    <string name="ok">OK</string>
 </resources>

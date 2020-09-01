@@ -36,7 +36,7 @@ object AppPrefs {
     fun saveDept(dept: String) {
         sharedPrefs().edit().putString(KEY_DEPT_ID, dept).apply()
     }
-    fun getDept(): String? = sharedPrefs().getString(KEY_DEPT_ID, "5f48924df8629600011b11ac")
+    fun getDept(): String? = sharedPrefs().getString(KEY_DEPT_ID, "5f4de80ec1fa78000179b49f")
 
     fun saveUIMode(mode: String) {
         sharedPrefs().edit().putString(KEY_UI_MODE, mode).apply()
@@ -53,8 +53,53 @@ object AppPrefs {
     }
     fun getBackendToken(): String? = sharedPrefs().getString(KEY_BACKEND_TOKEN, "")
 
+    //CDH API
+    private const val KEY_CDH_SERVICE_URL = "KEY_CDH_SERVICE_URL"
+    private const val KEY_API_KEY = "KEY_API_KEY"
+    private const val KEY_AUTO_SNAP_MODE = "KEY_AUTO_SNAP_MODE"
+    private const val KEY_IS_SHOW_BOUNDING_BOX = "KEY_IS_SHOW_BOUNDING_BOX"
+    private const val KEY_DISTANCE = "KEY_DISTANCE"
+    private const val KEY_SIMILARITY = "KEY_SIMILARITY"
+    private const val KEY_CDH_USERNAME = "KEY_CDH_USERNAME"
+    private const val KEY_CDH_PASSWORD = "KEY_CDH_PASSWORD"
+    private const val KEY_FACE_COMPARE_MODE = "KEY_FACE_COMPARE_MODE"
+    fun getCDHServiceURL(): String? = sharedPrefs().getString(KEY_CDH_SERVICE_URL, "http://27.254.41.62:8041/") // http://103.208.27.9:8041  //http://27.254.41.62:8050/
+    fun getCDHUserName(): String? = sharedPrefs().getString(KEY_CDH_USERNAME, "DEMO")
+    fun getCDHPassword(): String? = sharedPrefs().getString(KEY_CDH_PASSWORD, "Demon2499")
 
 
+    fun getApiKey(): String? = sharedPrefs().getString(KEY_API_KEY, "ZH7mDMvggNGGaZ1q3ERhQqPSuYrafq5v")
+
+
+    fun saveAutoSnapMode(isEnable: Boolean) {
+        sharedPrefs().edit().putBoolean(KEY_AUTO_SNAP_MODE, isEnable).apply()
+    }
+
+    fun getAutoSnapMode(): Boolean = sharedPrefs().getBoolean(KEY_AUTO_SNAP_MODE, false)
+
+    fun saveShowBoundingBoxState(isShowBoundingBox: Boolean) {
+        sharedPrefs().edit().putBoolean(KEY_IS_SHOW_BOUNDING_BOX, isShowBoundingBox).apply()
+    }
+
+    fun getShowBoundingBoxState(): Boolean = sharedPrefs().getBoolean(KEY_IS_SHOW_BOUNDING_BOX, true)
+
+    fun saveFaceCompareMode(isEnable: Boolean) {
+        sharedPrefs().edit().putBoolean(KEY_FACE_COMPARE_MODE, isEnable).apply()
+    }
+    fun getFaceCompareMode(): Boolean = sharedPrefs().getBoolean(KEY_FACE_COMPARE_MODE, false)
+
+
+    fun saveSnapDistance(distance: Int) {
+        sharedPrefs().edit().putInt(KEY_DISTANCE, distance).apply()
+    }
+
+    fun getSnapDistance(): Int = sharedPrefs().getInt(KEY_DISTANCE, 50000)
+
+    fun saveSimilarity(similarity: Int) {
+        sharedPrefs().edit().putInt(KEY_SIMILARITY, similarity).apply()
+    }
+
+    fun getSimilarity(): Int = sharedPrefs().getInt(KEY_SIMILARITY, 90)
 
 
 }

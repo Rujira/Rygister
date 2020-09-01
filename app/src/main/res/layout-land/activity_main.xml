@@ -35,24 +35,29 @@
             app:layout_constraintBottom_toBottomOf="parent">
 
         <androidx.cardview.widget.CardView
+                android:id="@+id/cardView"
                 android:layout_width="0dp"
-                android:layout_height="0dp" app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_height="0dp"
+                android:layout_marginStart="32dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="32dp"
+                android:layout_marginBottom="32dp"
+                android:clickable="true"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:layout_marginBottom="32dp" android:layout_marginTop="8dp" android:layout_marginEnd="32dp"
-                android:layout_marginStart="32dp" android:id="@+id/cardView"
-                android:clickable="true">
+                app:layout_constraintStart_toEndOf="@+id/imageView"
+                app:layout_constraintTop_toTopOf="parent">
 
             <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/mainContainer"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:focusableInTouchMode="true" android:id="@+id/mainContainer">
+                    android:focusableInTouchMode="true">
 
                 <ImageView
                         android:id="@+id/faceImageView"
-                        android:layout_width="300dp"
-                        android:layout_height="300dp"
+                        android:layout_width="280dp"
+                        android:layout_height="280dp"
                         android:layout_marginStart="32dp"
                         android:layout_marginTop="32dp"
                         app:layout_constraintStart_toStartOf="parent"
@@ -61,7 +66,7 @@
 
                 <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/fullnameTextInputLayout"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="32dp"
@@ -84,14 +89,14 @@
 
                 <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/visiteeTextInputLayout"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="32dp"
                         android:layout_marginTop="16dp"
                         android:layout_marginEnd="32dp"
                         android:layout_weight="5"
-                        android:hint="ชื่อผู้ติดต่อ"
+                        android:hint="กรอกชื่อของบุคคลที่ท่านต้องการจะติดต่อ"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toEndOf="@+id/faceImageView"
                         app:layout_constraintTop_toBottomOf="@+id/fullnameTextInputLayout">
@@ -108,7 +113,7 @@
 
                 <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/cardNumberTextInputLayout"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
@@ -119,14 +124,12 @@
                         app:layout_constraintStart_toStartOf="@+id/visiteeTextInputLayout"
                         app:layout_constraintTop_toBottomOf="@+id/visiteeTextInputLayout">
 
-
                     <AutoCompleteTextView
 
                             android:id="@+id/cardNumberDropdown"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="number" />
-
+                            android:inputType="none" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -164,6 +167,19 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
+
+        <ImageView
+                android:id="@+id/imageView"
+                android:layout_width="240dp"
+                android:layout_height="0dp"
+                android:layout_marginStart="32dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="220dp"
+                android:scaleType="fitStart"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_bay" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

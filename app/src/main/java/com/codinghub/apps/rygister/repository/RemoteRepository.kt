@@ -11,6 +11,9 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.codinghub.apps.rygister.app.Injection
+import com.codinghub.apps.rygister.model.DeptResponse.DeptResponse
+import com.codinghub.apps.rygister.model.compareface.CompareFaceRequest
+import com.codinghub.apps.rygister.model.compareface.CompareFaceResponse
 import com.codinghub.apps.rygister.model.error.ApiError
 import com.codinghub.apps.rygister.model.error.Either
 import com.codinghub.apps.rygister.model.login.LoginRequest
@@ -24,6 +27,7 @@ import retrofit2.Callback
 import retrofit2.Response
 
 object RemoteRepository : Repository {
+
 
     private val api = Injection.provideRygisterApi()
 
@@ -67,6 +71,25 @@ object RemoteRepository : Repository {
         return liveData
     }
 
+    override fun getDeptID(): LiveData<Either<DeptResponse>> {
+
+        val liveData = MutableLiveData<Either<DeptResponse>>()
+        api.getDeptID().enqueue(object : Callback<DeptResponse>{
+            override fun onResponse(call: Call<DeptResponse>, response: Response<DeptResponse>) {
+                if (response.isSuccessful) {
+                    liveData.value = Either.success(response.body())
+                } else {
+                    liveData.value = Either.error(ApiError.GETDEPT, null)
+                }
+            }
+
+            override fun onFailure(call: Call<DeptResponse>, t: Throwable) {
+                liveData.value = Either.error(ApiError.GETDEPT, null)
+            }
+        })
+        return liveData
+    }
+
     override fun register(request: RegisterRequest): LiveData<Either<RegisterResponse>> {
 
         val liveData = MutableLiveData<Either<RegisterResponse>>()
@@ -82,6 +105,27 @@ object RemoteRepository : Repository {
 
             override fun onFailure(call: Call<RegisterResponse>, t: Throwable) {
                 liveData.value = Either.error(ApiError.REGISTER, null)
+            }
+        })
+        return liveData
+    }
+
+    override fun compareFaces(request: CompareFaceRequest): LiveData<Either<CompareFaceResponse>> {
+
+        val cdhAPI = Injection.provideCDHDemoApi()
+        val liveData = MutableLiveData<Either<CompareFaceResponse>>()
+        cdhAPI.compareFace(request).enqueue(object : Callback<CompareFaceResponse>{
+
+            override fun onResponse(call: Call<CompareFaceResponse>, response: Response<CompareFaceResponse>) {
+                if(response.isSuccessful) {
+                    liveData.value = Either.success(response.body())
+                } else {
+                    liveData.value = Either.error(ApiError.COMPARE_FACE, null)
+                }
+            }
+
+            override fun onFailure(call: Call<CompareFaceResponse>, t: Throwable) {
+                liveData.value = Either.error(ApiError.COMPARE_FACE, null)
             }
         })
         return liveData

@@ -2,6 +2,7 @@ package com.codinghub.apps.rygister.app
 
 import com.codinghub.apps.rygister.BuildConfig
 import com.codinghub.apps.rygister.model.AppPrefs
+import com.codinghub.apps.rygister.repository.CDHDemoApi
 import com.codinghub.apps.rygister.repository.RemoteRepository
 import com.codinghub.apps.rygister.repository.Repository
 import com.codinghub.apps.rygister.repository.RygisterApi
@@ -130,5 +131,41 @@ object Injection {
     fun provideRygisterApi(): RygisterApi {
         return provideRetrofit().create(RygisterApi::class.java)
     }
+
+    //CDH API
+
+    private fun provideFaceCompareRetrofit(): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(AppPrefs.getCDHServiceURL().toString())
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(provideFaceCompareOkHttpClient())
+            .build()
+    }
+
+    private fun provideFaceCompareOkHttpClient(): OkHttpClient {
+
+        val httpClient = OkHttpClient.Builder()
+        httpClient.addInterceptor(provideLoggingInterceptor())
+        val username = AppPrefs.getCDHUserName().toString()
+        val password = AppPrefs.getCDHPassword().toString()
+
+        httpClient.addInterceptor { chain ->
+            val request = chain.request()
+                .newBuilder()
+                .addHeader("Authorization", Credentials.basic(username, password))
+                .addHeader("apikey", AppPrefs.getApiKey().toString())
+                .build()
+
+            chain.proceed(request)
+        }
+        return httpClient.build()
+    }
+
+    fun provideCDHDemoApi(): CDHDemoApi {
+        return provideFaceCompareRetrofit().create(CDHDemoApi::class.java)
+    }
+
+
+
 
 }
