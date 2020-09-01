@@ -21,7 +21,7 @@ object AppPrefs {
     fun saveServiceURL(url: String) {
         sharedPrefs().edit().putString(KEY_SERVICE_URL, url).apply()
     }
-    fun getServiceURL(): String? = sharedPrefs().getString(KEY_SERVICE_URL, "https://peerawat.dyndns.biz:18882")
+    fun getServiceURL(): String? = sharedPrefs().getString(KEY_SERVICE_URL, "https://10.50.9.1:11181")
 
     fun saveUsername(username: String) {
         sharedPrefs().edit().putString(KEY_HEADER_USERNAME, username).apply()

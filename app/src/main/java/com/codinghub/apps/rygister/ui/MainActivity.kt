@@ -185,6 +185,7 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
 
         cardNumberDropdown.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
+                cardNumber = cardNumberDropdown.text.toString()
                 updateUI()
             }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
@@ -355,9 +356,10 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
             if (either?.status == Status.SUCCESS && either.data != null) {
                 if (either.data.rtn == 0) {
                     Log.d(TAG, "${either.data.result}")
-
-                    for (departmentID in either.data.result.first().children) {
-                        deptIDList.add(departmentID.key)
+                    if (either.data.result.first().children.isNotEmpty()) {
+                        for (departmentID in either.data.result.first().children) {
+                            deptIDList.add(departmentID.key)
+                        }
                     }
 
                     Toast.makeText(this, "Successful Get Department", Toast.LENGTH_SHORT).show()
@@ -465,8 +467,10 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
 
                         isTakePhoto = true
 
+                        val resizedBitmap = resizeBitmap(comparedPersonImage, comparedPersonImage.width * 2, comparedPersonImage.height * 2)
+
                         val stream = ByteArrayOutputStream()
-                        thaiSmartCard.personalPicture.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                        resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
                         val byteArray = stream.toByteArray()
 
                         val base64String: String
@@ -483,7 +487,6 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
                         picture1 = base64String
 
                         updateUI()
-
 
                         card_status = CARD_READ
 
@@ -1019,6 +1022,7 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
             fullName = ""
             picture1 = ""
             picture2 = ""
+            reset()
         }
     }
 
@@ -1029,6 +1033,7 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
 
 
         val image = getImageBase64(faceImageView)
+        cardNumber = cardNumberDropdown.text.toString()
 
         val registDialog: android.app.AlertDialog? = SpotsDialog.Builder()
             .setContext(this)
@@ -1040,11 +1045,13 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
             }
 
 
+
         mainViewModel.register(image, fullName, visiteeName, cardNumber).observe(this, Observer<Either<RegisterResponse>> { either ->
             if (either?.status == Status.SUCCESS && either.data != null) {
                 if (either.data.rtn == 0) {
                     if (either.data.result.first().rtn == 0) {
                         Toast.makeText(this, "Register Successful ${either.data.result.first().message}", Toast.LENGTH_SHORT).show()
+
                     }
 
                 } else {
