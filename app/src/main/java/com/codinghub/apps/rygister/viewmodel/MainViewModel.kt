@@ -4,7 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.graphics.Bitmap
 import android.net.Uri
-import android.util.Log
+import android.text.Editable
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import com.codinghub.apps.rygister.app.Injection
@@ -97,26 +97,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return repository.compareFaces(request)
     }
 
-    fun saveAutoSnapMode(isEnable: Boolean) {
-        AppPrefs.saveAutoSnapMode(isEnable)
-    }
-
-    fun saveShowBoundingBoxState(isShowBoundingBox: Boolean) {
-        AppPrefs.saveShowBoundingBoxState(isShowBoundingBox)
-    }
-
-    fun saveSnapDistance(distance: Int) {
-        AppPrefs.saveSnapDistance(distance)
-    }
-
-    fun saveSimilarity(similarity: Int) {
-        AppPrefs.saveSimilarity(similarity)
-    }
-
     fun saveFaceCompareMode(isEnable: Boolean) {
         AppPrefs.saveFaceCompareMode(isEnable)
     }
 
     fun getFaceCompareMode() = AppPrefs.getFaceCompareMode()
+
+    fun saveBranch(name: String) {
+        AppPrefs.saveCardNumberBranch(name)
+    }
+    fun getBranch() = AppPrefs.getCardNumberBranch()
+
+    fun saveCurrentCardNumberPosition(position: Int) {
+        AppPrefs.saveCurrentCardNumberPosition(position)
+    }
+    fun getCurrentCardNumberPosition() = AppPrefs.getCurrentCardNumberPosition()
 }
 

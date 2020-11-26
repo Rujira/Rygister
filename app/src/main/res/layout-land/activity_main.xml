@@ -126,7 +126,7 @@
 
                     <AutoCompleteTextView
 
-                            android:id="@+id/cardNumberDropdown"
+                            android:id="@+id/cardTypeDropdown"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="none" />
@@ -142,8 +142,7 @@
                         android:orientation="horizontal"
                         android:weightSum="10"
                         app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="@+id/cardNumberTextInputLayout">
+                        app:layout_constraintEnd_toEndOf="parent">
 
                     <com.google.android.material.button.MaterialButton
                             android:id="@+id/resetButton"
@@ -162,7 +161,7 @@
                             android:layout_height="55dp"
                             android:layout_marginLeft="4dp"
                             android:layout_weight="5"
-                            android:text="register" />
+                            android:text="ลงทะเบียน" />
                 </LinearLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>

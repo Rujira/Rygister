@@ -13,4 +13,5 @@
     <string name="no_camera_permission">This application cannot run because it does not have the camera permission.  The application will now exit.</string>
     <string name="low_storage_error">Face detector dependencies cannot be downloaded due to low device storage</string>
     <string name="ok">OK</string>
+    <string name="face_image_string_description">แตะรูปด้านบนเพื่อถ่ายรูปใบหน้า\nรูปนี้จะถูกนำไปใช้เพื่อยืนยันตัวบุลคลในการผ่านเข้า-ออกประตู</string>
 </resources>

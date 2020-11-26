@@ -32,45 +32,74 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:id="@+id/contentView">
 
         <androidx.cardview.widget.CardView
+                android:id="@+id/cardView"
                 android:layout_width="0dp"
-                android:layout_height="0dp" app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_height="0dp"
+                android:layout_marginStart="32dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="32dp"
+                android:layout_marginBottom="32dp"
+                android:clickable="true"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:layout_marginBottom="32dp" android:layout_marginTop="8dp" android:layout_marginEnd="32dp"
-                android:layout_marginStart="32dp" android:id="@+id/cardView"
-                android:clickable="true">
+                app:layout_constraintStart_toEndOf="@+id/imageView"
+                app:layout_constraintTop_toTopOf="parent">
 
             <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/mainContainer"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:focusableInTouchMode="true" android:id="@+id/mainContainer">
+                    android:focusableInTouchMode="true">
+
+                <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/cardNumberTextInputLayout"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="32dp"
+                        android:layout_marginTop="32dp"
+                        android:layout_marginEnd="32dp"
+                        android:hint="ประเภทบัตร"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                    <AutoCompleteTextView
+
+                            android:id="@+id/cardTypeDropdown"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none" />
+
+                </com.google.android.material.textfield.TextInputLayout>
 
                 <ImageView
                         android:id="@+id/faceImageView"
                         android:layout_width="150dp"
                         android:layout_height="150dp"
-                        android:layout_marginStart="32dp"
                         android:layout_marginTop="32dp"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/departmentTextInputLayout"
                         app:srcCompat="@drawable/ic_face_image" />
 
                 <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/fullnameTextInputLayout"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="32dp"
+                        android:layout_marginTop="16dp"
                         android:layout_marginEnd="32dp"
                         android:layout_weight="5"
-                        android:hint="ชื่อ-สกุล"
+                        android:hint="ชื่อ-นามสกุล ของผู้มาติดต่อ"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toEndOf="@+id/faceImageView"
-                        app:layout_constraintTop_toTopOf="@+id/faceImageView">
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/cardNumberTextInputLayout">
 
                     <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/fullnameTextView"
@@ -82,19 +111,44 @@
                             android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+
                 <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/visiteeTextInputLayout"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                        android:id="@+id/cidTextInputLayout"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="32dp"
                         android:layout_marginTop="16dp"
                         android:layout_marginEnd="32dp"
                         android:layout_weight="5"
-                        android:hint="ชื่อผู้ติดต่อ"
+                        android:hint="หมายเลขบัตร"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toEndOf="@+id/faceImageView"
+                        app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/fullnameTextInputLayout">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/cidTextView"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:focusable="true"
+                            android:inputType="textPersonName"
+                            android:longClickable="false"
+                            android:maxLines="1" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/visiteeTextInputLayout"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="32dp"
+                        android:layout_marginTop="32dp"
+                        android:layout_marginEnd="32dp"
+                        android:layout_weight="5"
+                        android:hint="ชื่อบุคคลที่ต้องการติดต่อ"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/divider">
 
                     <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/visiteeTextView"
@@ -107,29 +161,46 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/cardNumberTextInputLayout"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
-                        android:layout_width="0dp"
+                        android:id="@+id/floorTextInputLayout"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="200dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="32dp"
                         android:layout_marginTop="16dp"
-                        android:layout_marginEnd="32dp"
-                        android:hint="Card Number"
-
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="@+id/visiteeTextInputLayout"
+                        android:hint="ชั้น"
+                        app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/visiteeTextInputLayout">
-
 
                     <AutoCompleteTextView
 
-                            android:id="@+id/cardNumberDropdown"
+                            android:id="@+id/floorDropdown"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="none" />
 
-
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/departmentTextInputLayout"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginEnd="32dp"
+                        android:hint="แผนก"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/floorTextInputLayout"
+                        app:layout_constraintTop_toBottomOf="@+id/visiteeTextInputLayout">
+
+                    <AutoCompleteTextView
+
+                            android:id="@+id/departmentDropdown"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none" />
+
+                </com.google.android.material.textfield.TextInputLayout>
 
                 <LinearLayout
                         android:id="@+id/linearLayout"
@@ -151,7 +222,7 @@
                             android:layout_height="55dp"
                             android:layout_marginRight="4dp"
                             android:layout_weight="5"
-                            android:text="reset"
+                            android:text="ล้างข้อมูล"
                             app:strokeColor="@color/colorPrimary" />
 
                     <com.google.android.material.button.MaterialButton
@@ -161,11 +232,82 @@
                             android:layout_height="55dp"
                             android:layout_marginLeft="4dp"
                             android:layout_weight="5"
-                            android:text="register" />
+                            android:text="ลงทะเบียน" />
                 </LinearLayout>
+
+                <View
+                        android:id="@+id/divider"
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="32dp"
+                        android:background="?android:attr/listDivider"
+                        app:layout_constraintEnd_toEndOf="@+id/fullnameTextInputLayout"
+                        app:layout_constraintStart_toStartOf="@+id/fullnameTextInputLayout"
+                        app:layout_constraintTop_toBottomOf="@+id/cidTextInputLayout" />
+
+                <TextView
+                        android:id="@+id/textView8"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="32dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginEnd="32dp"
+                        android:text="@string/face_image_string_description"
+                        android:textAlignment="center"
+                        android:textSize="18sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/faceImageView" />
+
+                <TextView
+                        android:id="@+id/textView9"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="32dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginEnd="32dp"
+                        android:text="แตะด้านบนเพื่อถ่ายรูปบัตร"
+                        android:textAlignment="center"
+                        android:textSize="18sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/cardImageView" />
+
+                <ImageView
+                        android:id="@+id/cardImageView"
+                        android:layout_width="150dp"
+                        android:layout_height="150dp"
+                        android:layout_marginTop="32dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/textView8"
+                        app:srcCompat="@drawable/ic_card" />
+
+                <TextView
+                        android:id="@+id/runningNumberTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:text="TextView"
+                        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
+
+        <ImageView
+                android:id="@+id/imageView"
+                android:layout_width="150dp"
+                android:layout_height="0dp"
+                android:layout_marginStart="32dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="220dp"
+                android:scaleType="fitStart"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_bay" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

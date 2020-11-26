@@ -20,7 +20,7 @@
 
         <activity
                 android:name=".ui.MainActivity"
-                android:screenOrientation="reverseLandscape">
+                android:screenOrientation="userPortrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

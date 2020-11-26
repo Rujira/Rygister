@@ -12,6 +12,8 @@ object AppPrefs {
     private const val KEY_HEADER_PASSWORD = "KEY_HEADER_PASSWORD"
     private const val KEY_UI_MODE = "KEY_UI_MODE"
     private const val KEY_DEPT_ID = "KEY_DEPT_ID"
+    private const val KEY_CARD_POSITION = "KEY_CARD_POSITION"
+    private const val KEY_BRANCH_NAME = "KEY_BRANCH_NAME"
 
     private const val KEY_TOKEN = "KEY_TOKEN"
     private const val KEY_BACKEND_TOKEN = "KEY_BACKEND_TOKEN"
@@ -101,5 +103,18 @@ object AppPrefs {
 
     fun getSimilarity(): Int = sharedPrefs().getInt(KEY_SIMILARITY, 90)
 
+    fun saveCardNumberBranch(name: String) {
+        sharedPrefs().edit().putString(KEY_BRANCH_NAME, name).apply()
+    }
+
+    fun getCardNumberBranch(): String? = sharedPrefs().getString(KEY_BRANCH_NAME, "card_number_n")
+
+    fun saveCurrentCardNumberPosition(position: Int) {
+        if (position < 250) {
+            sharedPrefs().edit().putInt(KEY_CARD_POSITION, position).apply()
+        }
+    }
+
+    fun getCurrentCardNumberPosition(): Int = sharedPrefs().getInt(KEY_CARD_POSITION, 0)
 
 }

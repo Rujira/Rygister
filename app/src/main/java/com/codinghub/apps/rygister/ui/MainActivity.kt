@@ -25,6 +25,7 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -38,6 +39,8 @@ import com.codinghub.apps.rygister.faceutillity.facedetection.GraphicFaceTracker
 import com.codinghub.apps.rygister.model.AppPrefs
 import com.codinghub.apps.rygister.model.DeptResponse.DeptResponse
 import com.codinghub.apps.rygister.model.UIMode
+import com.codinghub.apps.rygister.model.cardlist.CardList
+import com.codinghub.apps.rygister.model.cardlist.CardNumber
 import com.codinghub.apps.rygister.model.compareface.CompareFaceResponse
 import com.codinghub.apps.rygister.model.error.ApiError
 import com.codinghub.apps.rygister.model.error.Either
@@ -55,8 +58,11 @@ import com.google.android.gms.vision.CameraSource
 import com.google.android.gms.vision.MultiProcessor
 import com.google.android.gms.vision.face.FaceDetector
 import com.google.android.material.snackbar.Snackbar
+import com.google.gson.Gson
+import com.google.gson.JsonParseException
 import dmax.dialog.SpotsDialog
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_main.departmentDropdown
 import kotlinx.android.synthetic.main.choose_image_sheet.view.*
 import java.io.ByteArrayOutputStream
 import java.io.IOException
@@ -85,6 +91,7 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
     private var mGraphicOverlay: GraphicOverlay? = null
 
     private var picture1: String = ""
+    private var pictureCard: String = ""
     private var picture2: String = ""
 
     private var isTakingPhoto: Boolean = false
@@ -102,14 +109,23 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
     private val CARD_DETACHED = 3
     private var card_status = CARD_EMPTY
 
+    private var isAlreadyReadDataFromCard = false
+
     var smartCardReader: SmartCardDevice? = null
     private lateinit var receiver: BroadcastReceiver
 
     private var usbDeviceIsAttached = false
 
     private var mManual: String = ""
+
+    private var cardType: String = ""
     private var fullName: String = ""
+    private var cidNumber: String = ""
     private var visiteeName: String = ""
+    private var floorNumber: String = ""
+    private var department: String = ""
+
+    private lateinit var cardObject: CardNumber
     private var cardNumber: String = ""
 
     var cardTapCount: Int = 0
@@ -124,6 +140,7 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
 
     private val PERMISSION_CODE = 1000
     private val IMAGE_CAPTURE_CODE = 1001
+    private val CARD_CAPTURE_CODE = 1011
     private val IMAGE_GALLERY_CODE = 1002
 
     companion object {
@@ -134,6 +151,7 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
 
     private var deptIDList = mutableListOf<String>()
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -142,6 +160,16 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
         mainViewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
         supportActionBar!!.elevation = 0.0f
+
+        contentView.setOnTouchListener { view , _ ->
+            val inputMethodManager = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+            inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
+        }
+
+        mainContainer.setOnTouchListener { view , _ ->
+            val inputMethodManager = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+            inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
+        }
 
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder().permitAll().build())
         reset()
@@ -162,12 +190,60 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
         }
 
         faceImageView.setOnClickListener {
-            showChooseImageDialog()
+          //  showChooseImageDialog()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED || ActivityCompat.checkSelfPermission(this.applicationContext, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+                    val permission = arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    requestPermissions(permission, PERMISSION_CODE)
+                } else {
+                    openCamera(IMAGE_CAPTURE_CODE)
+
+                }
+
+            } else {
+                openCamera(IMAGE_CAPTURE_CODE)
+
+            }
         }
+
+        cardImageView.setOnClickListener {
+            //  showChooseImageDialog()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED || ActivityCompat.checkSelfPermission(this.applicationContext, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+                    val permission = arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    requestPermissions(permission, PERMISSION_CODE)
+                } else {
+                    openCamera(CARD_CAPTURE_CODE)
+
+                }
+
+            } else {
+                openCamera(CARD_CAPTURE_CODE)
+
+            }
+        }
+
+        cardTypeDropdown.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                cardType = cardTypeDropdown.text.toString()
+                updateUI()
+            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
+        })
 
         fullnameTextView.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 fullName = fullnameTextView.text.toString()
+                updateUI()
+            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
+        })
+
+        cidTextView.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                cidNumber = cidTextView.text.toString()
                 updateUI()
             }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
@@ -183,23 +259,23 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
         })
 
-        cardNumberDropdown.addTextChangedListener(object : TextWatcher {
+        floorDropdown.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                cardNumber = cardNumberDropdown.text.toString()
+                floorNumber = floorDropdown.text.toString()
                 updateUI()
             }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
         })
 
-//        cardNumberTextView.addTextChangedListener(object : TextWatcher {
-//            override fun afterTextChanged(s: Editable?) {
-//                cardNumber = cardNumberTextView.text.toString()
-//                updateUI()
-//            }
-//            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
-//            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
-//        })
+        departmentDropdown.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                department = departmentDropdown.text.toString()
+                updateUI()
+            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
+        })
 
         setupDropdown()
 
@@ -235,12 +311,28 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
             }
            //
         }
+
+        //test
+        generateCardNumber(mainViewModel.getCurrentCardNumberPosition())
+
     }
 
     private fun setupDropdown() {
-        val items = listOf("985859", "979502", "981348", "980676", "960263", "961169", "960867", "960565", "967939", "968227", "967651", "969088", "968802", "963294", "963896", "964193", "964480", "948605", "949478", "949770")
+        val items = listOf("บัตรประชาชน", "ใบขับขี่", "บัตรพนักงาน / ข้าราชการ", "Passport", "ไม่มีบัตร")
         val adapter = ArrayAdapter<String>(applicationContext, R.layout.dropdown_menu_pop_item, items)
-        cardNumberDropdown.setAdapter(adapter)
+        cardTypeDropdown.setAdapter(adapter)
+
+        val floorItems = mutableListOf<String>()
+        floorItems.clear()
+        for (i in 1..28) {
+            floorItems.add("${i}F")
+        }
+        val floorAdapter = ArrayAdapter<String>(applicationContext, R.layout.dropdown_menu_pop_item, floorItems)
+        floorDropdown.setAdapter(floorAdapter)
+
+        val deptItems = listOf<String>("สินเชื่อรถยนต์", "ศูนย์ลูกค้า SME", "กรุงศรี Corporate", "กรุงศรี เอ็กซ์คลูซีฟ", "วางแผนการเงิน", "บริการบัตรเครดิต", "สินเชื่อบ้าน / บุคคล")
+        val deptAdapter = ArrayAdapter<String>(applicationContext, R.layout.dropdown_menu_pop_item, deptItems)
+        departmentDropdown.setAdapter(deptAdapter)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -275,9 +367,9 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
         val serviceURLTextView = dialogView.findViewById<EditText>(R.id.serviceURLEditText)
         val usernameTextView = dialogView.findViewById<EditText>(R.id.usernameEditText)
         val passwordTextView = dialogView.findViewById<EditText>(R.id.passwordEditText)
-       // val deptTextView = dialogView.findViewById<EditText>(R.id.departmentEditText)
         val departmentDropdown = dialogView.findViewById<AutoCompleteTextView>(R.id.departmentDropdown)
-
+        val branchDropdown = dialogView.findViewById<AutoCompleteTextView>(R.id.branchDropdown)
+        var cardNumberPositionTextView = dialogView.findViewById<EditText>(R.id.cardNumberPositionEditText)
 
         Log.d(TAG, "Count ${deptIDList.size}")
 
@@ -289,11 +381,17 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
         usernameTextView.text = Editable.Factory.getInstance().newEditable(mainViewModel.getUsername())
         passwordTextView.text = Editable.Factory.getInstance().newEditable(mainViewModel.getPassword())
         departmentDropdown.setText(mainViewModel.getDept())
-        //departmentDropdown.text = Editable.Factory.getInstance().newEditable(mainViewModel.getDept())
-     //   deptTextView.text = Editable.Factory.getInstance().newEditable(mainViewModel.getDept())
+        branchDropdown.setText(mainViewModel.getBranch())
+        cardNumberPositionTextView.text = Editable.Factory.getInstance().newEditable(mainViewModel.getCurrentCardNumberPosition()
+            .toString())
+
 
         val adapter = ArrayAdapter(applicationContext, R.layout.dropdown_menu_pop_item, deptIDList)
         departmentDropdown.setAdapter(adapter)
+
+        val branchItems = listOf("card_number_n", "card_number_rama3")
+        val branchAdapter = ArrayAdapter(applicationContext, R.layout.dropdown_menu_pop_item, branchItems)
+        branchDropdown.setAdapter(branchAdapter)
 
         faceCompareSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -308,6 +406,10 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
             mainViewModel.saveUsername(usernameTextView.text.toString())
             mainViewModel.savePassword(passwordTextView.text.toString())
             mainViewModel.saveDept(departmentDropdown.text.toString())
+            mainViewModel.saveBranch(branchDropdown.text.toString())
+            mainViewModel.saveCurrentCardNumberPosition(cardNumberPositionTextView.text.toString().toInt())
+
+            reset()
 
         }
 
@@ -381,16 +483,16 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
             UIMode.KIOSK.mode -> {
                 mManual = UIMode.KIOSK.mode
                 Toast.makeText(this,"Kiosk Mode", Toast.LENGTH_SHORT).show()
-                fullnameTextView.isEnabled = false
-                faceImageView.isEnabled = false
+//                fullnameTextView.isEnabled = false
+//                faceImageView.isEnabled = false
 
             }
 
             UIMode.STAFF.mode -> {
                 mManual = UIMode.STAFF.mode
                 Toast.makeText(this,"Staff Mode", Toast.LENGTH_SHORT).show()
-                fullnameTextView.isEnabled = true
-                faceImageView.isEnabled = true
+//                fullnameTextView.isEnabled = true
+//                faceImageView.isEnabled = true
 
             }
         }
@@ -454,51 +556,65 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
 
             val thaiSmartCard = ThaiSmartCard(smartCardReader)
             if (thaiSmartCard.isInserted) {
+                if (!isAlreadyReadDataFromCard) {
                 if (card_status != CARD_READ) {
 
                     val info = thaiSmartCard.personalInformation
 
                     if (info != null) {
 
-                        fullnameTextView.setText(info.NameTH)
+                        if (cardTypeDropdown.text.toString() == "บัตรประชาชน") {
 
-                        comparedPersonImage = thaiSmartCard.personalPicture
-                        faceImageView.setImageBitmap(comparedPersonImage)
+                            fullnameTextView.setText(info.NameTH)
+                            cidTextView.setText(info.PersonalID)
 
-                        isTakePhoto = true
+                            comparedPersonImage = thaiSmartCard.personalPicture
+                            faceImageView.setImageBitmap(comparedPersonImage)
 
-                        val resizedBitmap = resizeBitmap(comparedPersonImage, comparedPersonImage.width * 2, comparedPersonImage.height * 2)
+                            isTakePhoto = true
 
-                        val stream = ByteArrayOutputStream()
-                        resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
-                        val byteArray = stream.toByteArray()
+                            val resizedBitmap = resizeBitmap(
+                                comparedPersonImage,
+                                comparedPersonImage.width * 2,
+                                comparedPersonImage.height * 2
+                            )
 
-                        val base64String: String
+                            val stream = ByteArrayOutputStream()
+                            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                            val byteArray = stream.toByteArray()
 
-                        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O) {
-                            Log.d(TAG, "Android O")
-                            base64String = Base64.getEncoder().encodeToString(byteArray)
+                            val base64String: String
 
-                        } else {
-                            Log.d(TAG, "Android Other")
-                            base64String = android.util.Base64.encodeToString(byteArray, android.util.Base64.NO_WRAP)
+                            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O) {
+                                Log.d(TAG, "Android O")
+                                base64String = Base64.getEncoder().encodeToString(byteArray)
+
+                            } else {
+                                Log.d(TAG, "Android Other")
+                                base64String = android.util.Base64.encodeToString(
+                                    byteArray,
+                                    android.util.Base64.NO_WRAP
+                                )
+                            }
+
+                            picture1 = base64String
+                            isAlreadyReadDataFromCard = true
+                            updateUI()
                         }
 
-                        picture1 = base64String
-
-                        updateUI()
 
                         card_status = CARD_READ
 
-                    } else {
-
-                        card_status = CARD_EMPTY
                     }
+                }
+                } else {
+                    card_status = CARD_EMPTY
 
                 }
-            } else {
 
+            } else {
                 card_status = CARD_DETACHED
+                isAlreadyReadDataFromCard = false
             }
         } else {
 
@@ -574,7 +690,7 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
             }
             PERMISSION_CODE -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    openCamera()
+                    openCamera(IMAGE_CAPTURE_CODE)
                 } else {
                     // Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
                 }
@@ -593,11 +709,49 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
     }
 
     private fun updateUI() {
-        if(fullnameTextView.text!!.isNotEmpty() && visiteeTextView.text!!.isNotEmpty() && cardNumberDropdown.text!!.isNotEmpty() && isTakePhoto) {
+        if(cardTypeDropdown.text!!.isNotEmpty() &&
+            fullnameTextView.text!!.isNotEmpty() &&
+            visiteeTextView.text!!.isNotEmpty() &&
+            isTakePhoto) {
             enableRegisterButton()
         } else {
             disableRegisterButton()
         }
+
+        when (cardTypeDropdown.text.toString()) {
+            "บัตรประชาชน" -> {
+                cidTextInputLayout.hint = "หมายเลขบัตรประชาชน"
+                cidTextInputLayout.visibility = View.VISIBLE
+                cardImageView.visibility = View.VISIBLE
+                textView9.visibility = View.VISIBLE
+            }
+            "ใบขับขี่" -> {
+                cidTextInputLayout.hint = "หมายเลขใบขับขี่"
+                cidTextInputLayout.visibility = View.VISIBLE
+                cardImageView.visibility = View.VISIBLE
+                textView9.visibility = View.VISIBLE
+            }
+            "บัตรพนักงาน / ข้าราชการ" -> {
+                cidTextInputLayout.hint = "หมายเลขบัตรพนักงาน / ข้าราชการ"
+                cidTextInputLayout.visibility = View.VISIBLE
+                cardImageView.visibility = View.VISIBLE
+                textView9.visibility = View.VISIBLE
+            }
+            "Passport" -> {
+                cidTextInputLayout.hint = "หมายเลข Passport"
+                cidTextInputLayout.visibility = View.VISIBLE
+                cardImageView.visibility = View.VISIBLE
+                textView9.visibility = View.VISIBLE
+            }
+            else -> {
+                cidTextInputLayout.visibility = View.GONE
+                cardImageView.visibility = View.GONE
+                textView9.visibility = View.GONE
+
+            }
+        }
+
+        generateCardNumber(mainViewModel.getCurrentCardNumberPosition())
     }
 
     private fun disableRegisterButton() {
@@ -609,15 +763,21 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
     }
 
     private fun reset() {
-
+        isAlreadyReadDataFromCard = false
         isTakePhoto = false
         faceImageView.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_face_image))
+        cardImageView.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_card))
+
+        cardTypeDropdown.setText("")
         fullnameTextView.setText("")
+        cidTextView.setText("")
         visiteeTextView.setText("")
-        cardNumberDropdown.setText("")
+        floorDropdown.setText("")
+        departmentDropdown.setText("")
 
         picture1 = ""
         picture2 = ""
+        pictureCard = ""
 
         updateUI()
     }
@@ -637,12 +797,12 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
                     val permission = arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     requestPermissions(permission, PERMISSION_CODE)
                 } else {
-                    openCamera()
+                    openCamera(IMAGE_CAPTURE_CODE)
                     dialog.dismiss()
                 }
 
             } else {
-                openCamera()
+                openCamera(IMAGE_CAPTURE_CODE)
                 dialog.dismiss()
             }
 
@@ -662,7 +822,7 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
         startActivityForResult(intent, IMAGE_GALLERY_CODE)
     }
 
-    private fun openCamera() {
+    private fun openCamera(captureCode: Int) {
 
         val values = ContentValues()
         values.put(MediaStore.Images.Media.TITLE, "New Picture")
@@ -672,7 +832,7 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
         val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
 
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, image_uri)
-        startActivityForResult(cameraIntent, IMAGE_CAPTURE_CODE)
+        startActivityForResult(cameraIntent, captureCode)
 
     }
 
@@ -680,7 +840,7 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode == IMAGE_CAPTURE_CODE && resultCode == Activity.RESULT_OK) {
+        if ((requestCode == IMAGE_CAPTURE_CODE || requestCode == CARD_CAPTURE_CODE) && resultCode == Activity.RESULT_OK) {
             isTakePhoto = true
 
             val ins : InputStream? = contentResolver.openInputStream(image_uri)
@@ -689,10 +849,16 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
             ins?.close()
 
             if (takedPersonImage != null) {
-                faceImageView.setImageBitmap(mainViewModel.modifyImageOrientation(this ,takedPersonImage, image_uri!!))
-                comparedPersonImage = mainViewModel.modifyImageOrientation(this, takedPersonImage, image_uri!!)
-                picture1 = getImageBase64(faceImageView)
-                contentResolver.delete(image_uri!!, null, null)
+                if (requestCode == 1001) {
+                    faceImageView.setImageBitmap(mainViewModel.modifyImageOrientation(this ,takedPersonImage, image_uri!!))
+                    comparedPersonImage = mainViewModel.modifyImageOrientation(this, takedPersonImage, image_uri!!)
+                    picture1 = getImageBase64(faceImageView)
+                } else {
+                    cardImageView.setImageBitmap(mainViewModel.modifyImageOrientation(this ,takedPersonImage, image_uri!!))
+                    pictureCard = getImageBase64(cardImageView)
+                }
+
+                //contentResolver.delete(image_uri!!, null, null)
             }
         }
 
@@ -750,8 +916,6 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
         Log.d(TAG, "Snapped")
         captureImage()
     }
-
-
 
     private fun captureImage() {
         Log.d(TAG, "Capture")
@@ -1029,11 +1193,9 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
 
     private fun register(isFaceCompare: Boolean) {
 
-     //   Log.d(TAG, "MQR : ${mQRCode}")
-
-
         val image = getImageBase64(faceImageView)
-        cardNumber = cardNumberDropdown.text.toString()
+
+        cardNumber = cardObject.uuid.toString()
 
         val registDialog: android.app.AlertDialog? = SpotsDialog.Builder()
             .setContext(this)
@@ -1044,14 +1206,16 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
                 show()
             }
 
-
-
         mainViewModel.register(image, fullName, visiteeName, cardNumber).observe(this, Observer<Either<RegisterResponse>> { either ->
             if (either?.status == Status.SUCCESS && either.data != null) {
                 if (either.data.rtn == 0) {
                     if (either.data.result.first().rtn == 0) {
-                        Toast.makeText(this, "Register Successful ${either.data.result.first().message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Register Successful ${either.data.result.first().message}", Toast.LENGTH_LONG).show()
 
+                        if (mainViewModel.getCurrentCardNumberPosition() < 250) {
+                            mainViewModel.saveCurrentCardNumberPosition(mainViewModel.getCurrentCardNumberPosition() + 1)
+                            reset()
+                        }
                     }
 
                 } else {
@@ -1066,11 +1230,28 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
             if (isFaceCompare) {
                 compareResultDialog?.dismiss()
             }
-
         })
-
     }
 
+    private fun generateCardNumber(position: Int) {
 
+        val json: String?
+        val inputStream: InputStream = this.assets.open("${mainViewModel.getBranch()}.json")
+        json = inputStream.bufferedReader().use { it.readText() }
+
+        try {
+            val jsonArray = Gson().fromJson(json, CardList::class.java)
+            val allCards = mutableListOf<CardNumber>()
+            for (province in jsonArray.number_items) {
+                allCards.add(province)
+            }
+            cardObject = allCards[position]
+
+            runningNumberTextView.text = "${cardObject.card_number} - ${cardObject.uuid}"
+
+        } catch (e : JsonParseException) {
+
+        }
+    }
 }
 

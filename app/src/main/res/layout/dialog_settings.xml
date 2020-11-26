@@ -54,6 +54,41 @@
                 android:inputType="none" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/branchTextInputLayout"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="32dp"
+            android:hint="Branch"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/textView5"
+            app:layout_constraintTop_toBottomOf="@+id/departmentTextInputLayout">
+
+        <AutoCompleteTextView
+
+                android:id="@+id/branchDropdown"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <EditText
+            android:id="@+id/cardNumberPositionEditText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="32dp"
+            android:ems="10"
+            android:hint="Card Number Position"
+            android:inputType="number"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/serviceURLEditText"
+            app:layout_constraintTop_toBottomOf="@+id/branchTextInputLayout" />
+
     <EditText
             android:id="@+id/passwordEditText"
             android:layout_width="0dp"
@@ -108,22 +143,43 @@
             app:layout_constraintTop_toTopOf="@+id/departmentTextInputLayout" />
 
     <TextView
-            android:id="@+id/textView6"
+        android:id="@+id/textView6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:text="Face Compare"
+        app:layout_constraintBottom_toBottomOf="@+id/faceCompareSwitch"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/faceCompareSwitch" />
+
+    <TextView
+            android:id="@+id/textView7"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="32dp"
-            android:text="Face Compare"
-            app:layout_constraintBottom_toBottomOf="@+id/faceCompareSwitch"
+            android:text="Branch"
+            app:layout_constraintBottom_toBottomOf="@+id/branchTextInputLayout"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/faceCompareSwitch" />
+            app:layout_constraintTop_toTopOf="@+id/branchTextInputLayout" />
+
+    <TextView
+            android:id="@+id/textView8"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:text="C Position"
+            app:layout_constraintBottom_toBottomOf="@+id/cardNumberPositionEditText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/cardNumberPositionEditText" />
+
 
     <Switch
             android:id="@+id/faceCompareSwitch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="38dp"
+            android:layout_marginTop="28dp"
             android:scaleX="1.2"
             android:scaleY="1.2"
             app:layout_constraintStart_toStartOf="@+id/departmentTextInputLayout"
-            app:layout_constraintTop_toBottomOf="@+id/departmentTextInputLayout" />
+            app:layout_constraintTop_toBottomOf="@+id/cardNumberPositionEditText" />
 </androidx.constraintlayout.widget.ConstraintLayout>
