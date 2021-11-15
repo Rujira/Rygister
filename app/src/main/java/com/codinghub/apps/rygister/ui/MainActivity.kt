@@ -74,8 +74,8 @@ class MainActivity : AppCompatActivity(), GraphicFaceTracker.GraphicFaceTrackerL
 
     private lateinit var mainViewModel: MainViewModel
 
-    private val MAX_PREVIEW_WIDTH = 1024
-    private val MAX_PREVIEW_HEIGHT = 1024
+    private val MAX_PREVIEW_WIDTH = 256
+    private val MAX_PREVIEW_HEIGHT = 256
 
     private var mCameraSource: CameraSource? = null
     private var mPreview: CameraSourcePreview? = null

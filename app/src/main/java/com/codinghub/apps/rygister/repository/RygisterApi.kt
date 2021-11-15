@@ -18,7 +18,7 @@ interface RygisterApi {
     fun trainFace(@Body body: TrainFaceRequest): Call<TrainFaceResponse>
 
     @Headers("Accept: application/json")
-    @POST("faceapi/compare")
+    @POST("face/compare")
     fun compareFace(@Body body: CompareFaceRequest): Call<CompareFaceResponse>
 
 

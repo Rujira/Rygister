@@ -12,15 +12,18 @@ object AppPrefs {
     private const val KEY_IS_SHOW_BOUNDING_BOX = "KEY_IS_SHOW_BOUNDING_BOX"
     private const val KEY_DISTANCE = "KEY_DISTANCE"
     private const val KEY_SIMILARITY = "KEY_SIMILARITY"
+    private const val KEY_API_KEY = "KEY_API_KEY"
 
     private fun sharedPrefs() = PreferenceManager.getDefaultSharedPreferences(RygisterApplication.getAppContext())
 
     fun getServiceURL(): String? = sharedPrefs().getString(
-        KEY_SERVICE_URL, "http://203.150.199.181/") // http://103.208.27.9:8041  //http://27.254.41.62:8050/
+        KEY_SERVICE_URL, "https://api.iottechgroup.com/demo/v2/") // http://103.208.27.9:8041  //http://27.254.41.62:8050/
     fun getHeaderUserName(): String? = sharedPrefs().getString(
-        KEY_HEADER_USERNAME, "CodingHubDemo01")
+        KEY_HEADER_USERNAME, "DEMO")
     fun getHeaderPassword(): String? = sharedPrefs().getString(
-        KEY_HEADER_PASSWORD, "CDHDemo")
+        KEY_HEADER_PASSWORD, "Demon2499")
+    fun getApiKey(): String? = sharedPrefs().getString(KEY_API_KEY, "ZH7mDMvggNGGaZ1q3ERhQqPSuYrafq5v")
+
 
     fun saveAutoSnapMode(isEnable: Boolean) {
         sharedPrefs().edit().putBoolean(KEY_AUTO_SNAP_MODE, isEnable).apply()

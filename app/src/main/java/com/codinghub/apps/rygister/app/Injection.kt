@@ -45,6 +45,7 @@ object Injection {
             val request = chain.request()
                 .newBuilder()
                 .addHeader("Authorization", Credentials.basic(username, password))
+                .addHeader("apikey", AppPrefs.getApiKey().toString())
                 .build()
 
             chain.proceed(request)
